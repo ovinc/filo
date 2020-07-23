@@ -9,3 +9,20 @@ move_files(src='.', dst='.', extension='')  # move only files with some suffix
 move_all(src='.', dst='.')  # move everything
 ```
 `extension` is optional, to consider only files with a certain extension, e.g. `'.txt'`. If left blank, all files considered (excluding directories).
+
+## Install
+
+#### Method 1
+
+In a terminal:
+```bash
+pip install git+https://cameleon.univ-lyon1.fr/ovincent/files-ov
+```
+
+#### Method 2
+
+- Clone the project or download directly the files into a folder.
+- In a terminal, `cd` into the project or folder, where the __setup.py__ is, then
+```bash
+pip install .
+```
