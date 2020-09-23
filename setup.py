@@ -9,7 +9,7 @@ setup(
         version=filo.__version__,
         author='Olivier Vincent',
         author_email='olivier.vincent@univ-lyon1.fr',
-        url='https://cameleon.univ-lyon1.fr/ovincent/files-ov',
+        url='https://cameleon.univ-lyon1.fr/ovincent/filo',
         description='Managing files.',
         long_description=long_description,
         long_description_content_type="text/markdown",
