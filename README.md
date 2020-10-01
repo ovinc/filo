@@ -8,6 +8,7 @@ list_all(path='.')  # all contents of a folder, sorted by name
 move_files(src='.', dst='.', extension='')  # move only files with some suffix
 move_all(src='.', dst='.')  # move everything
 data_to_line(data, sep='\t')  # transform iterable data into a line with \n at the end and separated with separator sep.
+line_to_data(line, sep='\t', dtype=float) # "Inverse of data_to_line(). Returns data as a tuple of type dtype.
 ```
 `extension` is optional, to consider only files with a certain extension, e.g. `'.txt'`. If left blank, all files considered (excluding directories).
 

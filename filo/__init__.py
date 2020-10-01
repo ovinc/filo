@@ -3,7 +3,7 @@
 from pathlib import Path
 
 
-__version__ = 0.2
+__version__ = 0.3
 
 
 def list_files(path='.', extension=''):
@@ -59,3 +59,10 @@ def data_to_line(data, sep='\t'):
     data_str_list = [str(x) for x in data]
     data_str_all = sep.join(data_str_list)
     return data_str_all + '\n'
+
+
+def line_to_data(line, sep='\t', dtype=float):
+    """Inverse of data_to_line(). Returns data as a tuple of type dtype."""
+    line_list = line.split(sep)
+    data_list = [dtype(x) for x in line_list]
+    return tuple(data_list)
