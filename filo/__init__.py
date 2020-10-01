@@ -3,7 +3,7 @@
 from pathlib import Path
 
 
-__version__ = 0.1
+__version__ = 0.2
 
 
 def list_files(path='.', extension=''):
@@ -52,3 +52,10 @@ def move_all(src='.', dst='.'):
     for content in contents:
         new_content = p2 / content.name
         content.rename(new_content)
+
+
+def data_to_line(data, sep='\t'):
+    """Transform iterable into line to write in a file, with a separarator."""
+    data_str_list = [str(x) for x in data]
+    data_str_all = sep.join(data_str_list)
+    return data_str_all + '\n'
