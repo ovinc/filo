@@ -18,7 +18,7 @@ line_to_data(line, sep='\t', dtype=float) # "Inverse of data_to_line(). Returns 
 
 In a terminal:
 ```bash
-pip install git+https://cameleon.univ-lyon1.fr/ovincent/files-ov
+pip install git+https://cameleon.univ-lyon1.fr/ovincent/filo
 ```
 
 #### Method 2
@@ -28,3 +28,4 @@ pip install git+https://cameleon.univ-lyon1.fr/ovincent/files-ov
 ```bash
 pip install .
 ```
+(use the `-e` option to install in editable mode).
