@@ -1,12 +1,13 @@
 ## General information
 
-**filo** is a Python 3 module for file management. It provides the following functions:
+**filo** is a Python 3 module for file management. It provides the following functions (see docstrings for help):
 
 ```python
 list_files(path='.', extension='')  # all files in a folder, sorted by name
 list_all(path='.')  # all contents of a folder, sorted by name
 move_files(src='.', dst='.', extension='')  # move only files with some suffix
 move_all(src='.', dst='.')  # move everything
+batch_file_rename(name, newname, path='.')  # rename recursively files named name into newname
 data_to_line(data, sep='\t')  # transform iterable data into a line with \n at the end and separated with separator sep.
 line_to_data(line, sep='\t', dtype=float) # "Inverse of data_to_line(). Returns data as a tuple of type dtype.
 ```

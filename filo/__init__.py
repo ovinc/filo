@@ -3,7 +3,7 @@
 from pathlib import Path
 
 
-__version__ = 0.3
+__version__ = 0.4
 
 
 def list_files(path='.', extension=''):
@@ -52,6 +52,39 @@ def move_all(src='.', dst='.'):
     for content in contents:
         new_content = p2 / content.name
         content.rename(new_content)
+
+
+
+def batch_file_rename(name, newname, path='.'):
+    """Change name to newname for all files in path and subdirectories.
+
+    Parameters
+    ----------
+    name, newname: str
+    path: str or path object
+
+    Example
+    -------
+    batch_file_rename('Test.txt', 'test.txt')
+    will rename all files named 'Test.txt' into 'test.txt' in current directory
+    and subdirectories.
+
+    Notes
+    -----
+    - IMPORTANT: before running this function, check all files that will be
+    impacted by running list(Path(path).glob(f'**/{name}')).
+    - modification, creation dates etc. not changed in the process.
+    """
+    folder = Path(path)
+    files = folder.glob(f'**/{name}')
+
+    for file in files:
+        newfile = file.with_name(newname)
+        file.rename(newfile)
+
+
+
+# =================== Functions for csv saving and reading ===================
 
 
 def data_to_line(data, sep='\t'):
