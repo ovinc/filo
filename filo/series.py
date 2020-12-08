@@ -1,10 +1,19 @@
 """Manage Series of experimental data in potentially several folders."""
 
+import os
 from pathlib import Path
 import pandas as pd
 
 from .general import make_iterable, list_files
 
+
+# ================================== Config ==================================
+
+
+default_filename = 'FileSeries_Info.txt'
+
+
+# ================================= Classes ==================================
 
 class File:
     """Individual file among the series of files. Used by Series"""
@@ -16,17 +25,25 @@ class File:
          - num: number identifier of the file across all folders
          """
         self.file = file            # Pathlib object
-        self.folder = file.parent   # Pathlib object
-        self.name = file.name       # filename (str)
         self.num = num              # identifier (int)
-        self.time = None  # stores time when Series.set_times() is called
+        self.time = None  # stores time when Series._measure_times() is called
 
     def __repr__(self):
-        return f'File {self.name} in folder {self.folder}, id number {self.num}.'
+        return f"filo.File #{self.num} [{self.name} in folder '{self.folder}']"
+
+    @property
+    def folder(self):
+        return self.file.parent
+
+    @property
+    def name(self):
+        return self.file.name
 
 
 class Series:
     """Class to manage series of experimental data in one or several folders."""
+
+    name = 'File series'
 
     def __init__(self, paths='.', extension='', savepath='.'):
         """Init series of spectra object.
@@ -38,78 +55,126 @@ class Series:
         - extension: extension of files to be considered (e.g. '.txt')
         - savepath: folder in which to save analysis data if applicable.
         """
-        # Create an iterable of folders to consider for analysis -------------
+        self.savepath = Path(savepath)
+        self.savepath.mkdir(exist_ok=True)  # create savepath if does not exist.
+
         if type(paths) is str:
             self.folders = paths,
         else:
             self.folders = make_iterable(paths)
         self.folders = [Path(folder) for folder in self.folders]
-        self.savepath = Path(savepath)
         self.extension = extension
 
-        self.times_set = False  # indicates if file times have been calculated
+        self.times_set = False  # True when file times are set (e.g. by measure_time())
 
-        self.files = [] # will store all file objects from filo.File class
+        self.files = self._list_files()  # empty list if no files in folder.
+        self._measure_times()             # add creation time info
 
-        # Create list of file objects with useful info -----------------------
+    def __repr__(self):
+        return f"{self.__class__.name} [extension '{self.extension}', "\
+               f'folders {[str(folder) for folder in self.folders]}, '\
+               f"savepath '{self.savepath}', {len(self.files)} files]"
+
+    # =================== Private methods to get files info ==================
+
+    def _list_files(self):
+        """Create list of filo.File objects from files in self.folders.
+
+        Return a list of filo.File objects.
+        """
+        files = []
         n = 0  # shift in measurement number if multiple folders
         for i_folder, folder in enumerate(self.folders):
-            for i_local, file in enumerate(list_files(folder, extension)):
+            for i_local, file in enumerate(list_files(folder, self.extension)):
                 num = i_local + n
-                self.files.append(File(file, num))
+                files.append(File(file, num))
             else:
                 try:
                     n += i_local + 1
-                except UnboundLocalError:
-                    raise UnboundLocalError(f'No data in folder {folder.resolve()}')
+                except UnboundLocalError:  # no data in folder
+                    pass
+        return files
 
-    def __repr__(self):
-        return f'File series of extension {self.extension} '\
-               f'in folders {[str(folder) for folder in self.folders]}'
-
-    # Timing info ------------------------------------------------------------
-
-    def set_times(self):
-        """Define time (unix) associated with each file. Subclass if necessary."""
+    def _measure_times(self):
+        """Define time (unix) associated with each file (subclass if necessary)."""
         for file in self.files:
             file.time = file.file.stat().st_mtime
         self.times_set = True
 
+    # =========================== Public methods =============================
+
+    def load_info(self, filename=default_filename, sep='\t'):
+        """Load file info and create list of file objects using saved data.
+
+        Data must be saved in a csv file in self.savepath, with csv separator
+        `sep`, and with columns (at least) 'num', 'folder', 'filename'.
+        If timing info is available, file.time is set as well.
+
+        No output (self.files is updated).
+        """
+        data_file = Path(self.savepath) / filename
+        data = pd.read_csv(data_file, sep=sep)
+        data.set_index('num', inplace=True)
+
+        # Check if there is time info ----------------------------------------
+        try:
+            data['time (unix)']
+        except KeyError:
+            self.times_set = False
+        else:
+            self.times_set = True
+
+        # Update file information in the list of filo.File objects -----------
+        self.files = []
+        for num in data.index:
+            filename = data.at[num, 'filename']
+            foldername = data.at[num, 'folder']
+            filepath = self.savepath / foldername / filename
+            file = File(filepath, num)
+            if self.times_set:
+                file.time = data.at[file.num, 'time (unix)']
+            self.files.append(file)
+
+    def save_info(self, filename=default_filename, sep='\t'):
+        """Save times of files as generated by times() in .txt file."""
+        data = self.info  # pandas dataframe (see self.times below)
+        time_file = Path(self.savepath) / filename
+        data.to_csv(time_file, sep=sep)
+
     @property
-    def times(self):
-        """Get time of spectra files from creation date.
+    def info(self):
+        """Get time of files from creation date.
 
         Output
         ------
-        pandas dataframe with num as index and time, folder, filename
+        pandas dataframe with 'num' as index and 'time (unix)', folder, filename
         as columns.
         """
-        if self.times_set:
+        nums = [file.num for file in self.files]
+        filenames = [file.name for file in self.files]
+        dirs = [os.path.relpath(f.folder, self.savepath) for f in self.files]
 
-            ii = [file.num for file in self.files]
-            dirs = [str(f.folder.relative_to(self.savepath)) for f in self.files]
-            filenames = [file.name for file in self.files]
-            times = [file.time for file in self.files]
-
-            all_data = zip(ii, times, filenames, dirs)
-            columns = ['num', 'time (unix)', 'filename', 'folder']
-            data = pd.DataFrame(all_data, columns=columns)
-            data.set_index('num', inplace=True)
-
-            return data
-
-        else:
-            raise AttributeError('Times not set yet (use set_times())')
-
-    def save_times(self, filename='File_Time.txt', sep='\t'):
-        """Save times of files as generated by times() in .txt file."""
-        data = self.times
-        file = Path(self.savepath) / filename
-        data.to_csv(file, sep=sep)
-
-    def load_times(self, filename='File_Time.txt', sep='\t'):
-        """Load pandas dataframe with times and file info."""
-        file = Path(self.savepath) / filename
-        data = pd.read_csv(file, sep=sep)
+        columns = ['num', 'folder', 'filename']
+        info = zip(nums, dirs, filenames)
+        data = pd.DataFrame(info, columns=columns)
         data.set_index('num', inplace=True)
+
+        if self.times_set:
+            times = [file.time for file in self.files]
+            data['time (unix)'] = times
+
         return data
+
+    def load_time(self, filename=default_filename, sep='\t'):
+        """Same as load_files but updates only times, not file info.
+
+        The data in filename must be csv with as least columns 'num' and
+        'time (unix)'. All nums in self.files must be present in the data.
+        """
+        data_file = Path(self.savepath) / filename
+        data = pd.read_csv(data_file, sep=sep)
+        data.set_index('num', inplace=True)
+
+        # Update file information in the list of filo.File objects -----------
+        for file in self.files:
+            file.time = data.at[file.num, 'time (unix)']

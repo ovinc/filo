@@ -47,32 +47,50 @@ line_to_data(line, sep='\t', dtype=float) # "Inverse of data_to_line(). Returns 
 Class to manage series of files of the same type (e.g. image series or spectra series from time-lapse experiments), possibly spread out across multiple folders. The main purpose of the class is to be subclassed in other modules specialized for analysis of specific experiment types.
 
 ### Methods
-
-- `set_times()`: goes through all `self.files` and set their `time` attribute by extracting the creation time of the file (unix time),
-- `save_times()`: save all file times and other file info into .txt file,
-- `load_times()`: return a pandas DataFrame containing info saved in .txt file by `save_times()` (currently, does not impact `self.times` and individual `File.time` of files).
+- `save_info()`: save info of files into csv file,
+- `load_info()`: load info of files from csv file (overwrites `self.files`),
+- `load_time()`: keep current file info but only update time from info in csv file.
 
 ### Attributes and properties
 
+#### Regular attributes
 - `folders`: list of folders (`pathlib.Path` objects) across which the file series is spread,
-- `files`: list of files (`filo.File` objects, see below),
+- `files`: list of files (`filo.File` objects, see below); `self.files[num]` is the file of identifier `num`,
 - `savepath`: directory in which data extracted/analyzed from files is saved, if applicable,
-- `extension`: extension of the files (str),
-- `times`: pandas DataFrame containing info on time of files, accessible only after `set_times()` has run (note: currently not impacted by a call to `load_times()`).
+- `extension`: extension of the files (str).
+
+#### Read-only properties
+(derived from regular attributes and methods)
+- `info`: pandas DataFrame containing info (number, folder, file, time) time of files; re-calculated every time `self.info` is called and thus reflects changes in `self.files`.
 
 
-`File` class
-------------
+### `File` class
 
-Class describing a single file within a file series. It is used by the `Series` class.
+Class describing a single file within a file series and used by the `Series` class.
 
-### Attributes
-
+#### Regular attributes
 - `file`: Pathlib object of the file,
-- `folder` Pathlib object of the parent directory containing the file,
-- `name`: filename (str),
 - `num`: identifier of file within (int). In the series context, `num` starts at 0 in the first folder,
 - `time`: stores unix time (float, in seconds) when `Series.set_times()` is called.
+
+#### Read-only properties
+(derived from regular attributes)
+- `folder` Pathlib object of the parent directory containing the file,
+- `name`: filename (str).
+
+
+### Examples
+
+```python
+from filo import Series
+series = Series(paths=['img1', 'img2'], savepath='analysis')
+series.info         # see all file info in form of a pandas DataFrame
+series.save_info()  # save info into 'File_Info.txt' (filename can be specified)
+series.files[10].time  # unix time of file creation
+series.load_info('Other_File_Info.txt')  # update file data from other file
+series.load_time('Time_File_Info.txt')  # keep file data but update time
+```
+
 
 
 Miscellaneous
