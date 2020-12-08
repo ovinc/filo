@@ -143,7 +143,7 @@ class Series:
 
     @property
     def info(self):
-        """Get time of files from creation date.
+        """Get time of files from creation date (st_mtime).
 
         Output
         ------

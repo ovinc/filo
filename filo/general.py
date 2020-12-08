@@ -104,7 +104,7 @@ def line_to_data(line, sep='\t', dtype=float):
 
 
 def make_iterable(x):
-    """Transforms non-iterables into a tuple, but keeps iterables unchanged."""
+    """Transform non-iterables into a tuple, but keeps iterables unchanged."""
     try:
         iter(x)
     except TypeError:

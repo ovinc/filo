@@ -6,4 +6,4 @@ from .general import make_iterable
 
 from .series import Series
 
-__version__ = '1.0.0'
+__version__ = '1.1.0'
