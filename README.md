@@ -94,6 +94,8 @@ with the following additional read-only properties derived from the ones above f
 
 ### Examples
 
+(See **ExampleSeries.ipynb** for examples with actual data).
+
 ```python
 from filo import Series
 
