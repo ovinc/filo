@@ -78,6 +78,7 @@ The list of file objects is accessed through the list `Series.files` containing 
 #### Read-only properties
 (derived from regular attributes and methods)
 - `info`: pandas DataFrame containing info (number, folder, file, time) time of files; re-calculated every time `self.info` is called and thus reflects changes in `self.files`.
+- `duration`: datetime.Timedelta object, time difference between last file and first file in the series
 
 
 ### `File` objects

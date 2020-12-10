@@ -3,6 +3,7 @@
 import os
 from pathlib import Path
 import pandas as pd
+import datetime
 
 from .general import make_iterable, list_files
 
@@ -181,3 +182,18 @@ class Series:
         # Update file information in the list of filo.File objects -----------
         for file in self.files:
             file.time = data.at[file.num, 'time (unix)']
+
+    @property
+    def duration(self):
+        """Timedelta between timing info of first and last file.
+
+        Output
+        ------
+        datetime.Timedelta object.
+        """
+        if self.times_set:
+            t = 'time (unix)'
+            dt_s = self.info[t].iloc[-1] - self.info[t].iloc[0]
+            return datetime.timedelta(seconds=float(dt_s))
+        else:
+            raise AttributeError('File timing info missing.')

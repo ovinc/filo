@@ -17,6 +17,7 @@ def test_series_numbering():
 
 def test_series_info():
     """test generation of infos DataFrame."""
+    series.load_info('External_File_Info.txt')
     info = series.info
     assert round(info.at[4, 'time (unix)']) == 1599832405
 
@@ -33,3 +34,9 @@ def test_series_info_update_time():
     series.load_time('External_Time_Info.txt')
     info = series.info
     assert info.at[2, 'time (unix)'] == 1607500504
+
+
+def test_series_duration():
+    """Test calculation of time duration of series."""
+    series.load_time('External_Time_Info.txt')
+    assert round(series.duration.total_seconds()) == 38
