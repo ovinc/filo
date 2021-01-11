@@ -3,3 +3,5 @@
 .vscode/
 .ipynb_checkpoints*
 .eggs/
+build/
+dist/

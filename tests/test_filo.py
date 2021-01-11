@@ -10,6 +10,7 @@ data_path = module_path / 'data'
 folders = data_path / 'img1', data_path / 'img2'
 series = Series(folders, savepath=data_path, extension='.png')
 
+
 def test_series_numbering():
     """Verify numbering of files is ok in multiple folders for series."""
     assert series.files[-1].num == 19

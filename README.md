@@ -1,52 +1,19 @@
-General information
-===================
+About
+=====
 
-**filo** is a Python 3 module for file management. It provides the various functions and a `Series` class to manage series of files (e.g. series of images or series of spectra), that use a custom `File` class. See summary of functions and classes below, and associated docstrings for details.
+**filo** is a Python 3 module for file management. Its main purpose is to provide a `Series` class to manage series of files (e.g. series of images or series of spectra), that use a custom `File` class. In particular, file creation time is detected automatically and can be accessed as a *pandas* dataframe.
+
+Some other useful functions for file management are also provided. See summary of functions and classes below, and associated docstrings for details.
 
 Install
--------
+=======
 
-### Method 1
-
-In a terminal:
 ```bash
-pip install git+https://cameleon.univ-lyon1.fr/ovincent/filo
+pip install filo
 ```
-
-### Method 2
-
-- Clone the project or download directly the files into a folder.
-- In a terminal, `cd` into the project or folder, where the __setup.py__ is, then
-```bash
-pip install .
-```
-(use the `-e` option to install in editable mode).
-
 
 Contents
 ========
-
-Functions
----------
-
-```python
-# List files and folders -----------------------------------------------------
-list_files(path='.', extension='')  # all files in a folder, sorted by name
-list_all(path='.')  # all contents of a folder, sorted by name
-
-# Move files and folders -----------------------------------------------------
-move_files(src='.', dst='.', extension='')  # move only files with some suffix
-move_all(src='.', dst='.')  # move everything
-
-# Line formatting for csv ----------------------------------------------------
-data_to_line(data, sep='\t')  # iterable data to a line with \n, separated with separator sep.
-line_to_data(line, sep='\t', dtype=float) # "Inverse of data_to_line(). Returns data as a tuple of type dtype.
-
-# Misc -----------------------------------------------------------------------
-batch_file_rename(name, newname, path='.')  # rename recursively files named name into newname
-make_iterable(x):  # Transform non-iterables into a tuple, but keeps iterables unchanged
-```
-**Note**: `extension` is optional, to consider only files with a certain extension, e.g. `'.txt'`. If left blank, all files considered (excluding directories).
 
 
 `Series` class
@@ -59,7 +26,6 @@ The main idea is that files are attributed a unique identifier (`num`) that star
 **Note**: the time attribute is automatically extracted as the creation time of the file (*st_mtime*), but can be overwritten with external information, or can be defined differently by subclassing the `_measure_times()` method.
 
 The list of file objects is accessed through the list `Series.files` containing all `filo.File` objects (`Series.files[i]` is the file object with identifier `num=i`). The correspondence between identifier, actual files, and file times is summarized in the `Series.info` attribute, which is a pandas DataFrame tied to `Series.files`, and which can be saved into a csv file. Loading options also exist to update file data using data stored in external files.
-
 
 
 ### `Series` Methods
@@ -118,15 +84,42 @@ series.load_time('Other_File_Info.txt')   # update time information but keep oth
 series.save_info('FileSeries_Info_New.txt')  # save updated info into new txt file
 ```
 
+Misc. Functions
+===============
 
-Miscellaneous
-=============
+```python
+# List files and folders -----------------------------------------------------
+list_files(path='.', extension='')  # all files in a folder, sorted by name
+list_all(path='.')  # all contents of a folder, sorted by name
 
-Dependencies
-------------
-- pandas (for saving series data in `Series` class)
+# Move files and folders -----------------------------------------------------
+move_files(src='.', dst='.', extension='')  # move only files with some suffix
+move_all(src='.', dst='.')  # move everything
+
+# Line formatting for csv ----------------------------------------------------
+data_to_line(data, sep='\t')  # iterable data to a line with \n, separated with separator sep.
+line_to_data(line, sep='\t', dtype=float) # "Inverse of data_to_line(). Returns data as a tuple of type dtype.
+
+# Misc -----------------------------------------------------------------------
+batch_file_rename(name, newname, path='.')  # rename recursively files named name into newname
+make_iterable(x):  # Transform non-iterables into a tuple, but keeps iterables unchanged
+```
+**Note**: `extension` is optional, to consider only files with a certain extension, e.g. `'.txt'`. If left blank, all files considered (excluding directories).
+
+
+Requirements
+============
+(installed automatically by pip if necessary)
+- python >= 3.6
+- pandas (for managing data in `Series` class)
 
 Author
-------
+======
 Olivier Vincent
-(olivier.vincent@univ-lyon1.fr)
+(ovinc.py@gmail.com)
+
+License
+=======
+
+3-clause BSD (see *LICENSE* file)
+
