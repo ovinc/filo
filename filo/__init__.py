@@ -6,6 +6,7 @@ from .general import make_iterable
 
 from .series import Series
 
-from importlib.metadata import version
+# from importlib.metadata import version  # only for python 3.8+
+from importlib_metadata import version
 
 __version__ = version('filo')
