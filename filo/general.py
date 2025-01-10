@@ -100,6 +100,19 @@ def line_to_data(line, sep='\t', dtype=float):
     return tuple(data_list)
 
 
+def load_csv(file, sep=',', skiprows=0):
+    """Load csv file into a list of lists, similar to numpy.genfromtxt()"""
+    data = []
+    with open(file, 'r') as f:
+        for i, line in enumerate(f.readlines()):
+            if i < skiprows:
+                continue
+            data_raw = line.split(sep)
+            data.append([x.strip() for x in data_raw])
+    return data
+
+
+
 # ================================== MISC. ===================================
 
 

@@ -97,6 +97,7 @@ move_files(src='.', dst='.', extension='')  # move only files with some suffix
 move_all(src='.', dst='.')  # move everything
 
 # Line formatting for csv ----------------------------------------------------
+load_csv(file, sep='\t', skiprows=2)  # load csv into list of lists
 data_to_line(data, sep='\t')  # iterable data to a line with \n, separated with separator sep.
 line_to_data(line, sep='\t', dtype=float) # "Inverse of data_to_line(). Returns data as a tuple of type dtype.
 
