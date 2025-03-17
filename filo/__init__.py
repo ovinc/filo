@@ -7,6 +7,8 @@ from .general import make_iterable
 
 from .series import Series
 
+from .results import ResultsBase
+
 # from importlib.metadata import version  # only for python 3.8+
 from importlib_metadata import version
 

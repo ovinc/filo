@@ -1,7 +1,9 @@
 About
 =====
 
-**filo** is a Python 3 module for file management. Its main purpose is to provide a `Series` class to manage series of files (e.g. series of images or series of spectra), that use a custom `File` class. In particular, file creation time is detected automatically and can be accessed as a *pandas* dataframe.
+**filo** is a Python 3 package for file management. Its main purpose is to provide a `Series` class to manage series of files (e.g. series of images or series of spectra), that use a custom `File` class. In particular, file creation time is detected automatically and can be accessed as a *pandas* dataframe.
+
+The package also provides a `ResultsBase` base class to store data and metadata and save/load them into/from files.
 
 Some other useful functions for file management are also provided. See summary of functions and classes below, and associated docstrings for details.
 
@@ -83,6 +85,32 @@ series.load_info('Other_File_Info.txt')  # update all file data using data from 
 series.load_time('Other_File_Info.txt')   # update time information but keep other info
 series.save_info('FileSeries_Info_New.txt')  # save updated info into new txt file
 ```
+
+`ResultsBase` class
+===================
+
+This is a base class to store analysis results and associated metadata (e.g. from file series such as images or spectra) and save them to files, or load the data/metadata from these files.
+
+The class needs to be subclassed by redefining the following methods:
+- `_load_data(self, file)`
+- `_save_data(self, data, file)`
+- `_load_metadata(self, file)`
+- `_save_metadata(self, metadata, file)`
+
+Then it provides the following methods and attributes:
+
+### Methods
+
+- `save()`: save analysis data and metadata
+- `load()`: load analysis data and metadata from files (stores them in the `data` and `metadata` attributes; see below)
+- `load_data()`: load and return data loaded from file
+- `load_metadata()`: load and return dictionary of metadata loaded from file
+- `save_data()`: save only data
+- `save_metadata()`: save only metadata
+
+### Attributes
+- `data`, analysis data
+- `metadata`, analysis metadata
 
 Misc. Functions
 ===============

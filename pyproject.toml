@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "filo"
+authors = [
+    {name = "Olivier Vincent", email = "ovinc.py@gmail.com"},
+]
+description = "Managing files and file series"
+readme = "README.md"
+requires-python = ">=3.6"
+keywords = [
+    "files",
+    "management",
+    "file",
+    "series",
+]
+license = {text = "BSD 3-Clause License"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: BSD License",
+]
+dependencies = [
+    "importlib-metadata",
+    "pandas",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/ovinc/filo"
+Documentation = "https://github.com/ovinc/filo/README.md"
+Repository = "https://github.com/ovinc/filo.git"
+
+[tool.setuptools.packages.find]
+# exclude = ["media",]
+
+[tool.setuptools_scm]
+# can be empty if no extra settings are needed, presence enables setuptools-scm
