@@ -141,6 +141,7 @@ Requirements
 (installed automatically by pip if necessary)
 - python >= 3.6
 - pandas (for managing data in `Series` class)
+- matplotlib (for interactive inspection of series data)
 - importlib-metadata
 
 Author

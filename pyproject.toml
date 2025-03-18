@@ -25,6 +25,7 @@ classifiers = [
 dependencies = [
     "importlib-metadata",
     "pandas",
+    "matplotlib",
 ]
 dynamic = ["version"]
 
