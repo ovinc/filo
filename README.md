@@ -52,7 +52,7 @@ The list of file objects is accessed through the list `Series.files` containing 
 ### `File` objects
 
 File objects listed in `Series.files` have the following attributes:
-- `file`: Pathlib object of the file,
+- `path`: Pathlib object of the file,
 - `num`: identifier of file within (int). In the series context, `num` starts at 0 in the first folder,
 - `time`: stores unix time (float, in seconds) when `Series.set_times()` is called,
 

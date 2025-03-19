@@ -14,13 +14,19 @@ from .general import make_iterable, list_files
 class File:
     """Individual file among the series of files. Used by Series"""
 
-    def __init__(self, file, num):
-        """Parameters:
+    def __init__(self, path, num):
+        """Init File object
 
-         - file: pathlib object linking to the file
-         - num: number identifier of the file across all folders
+        Parameters
+        ----------
+
+         file: pathlib.Path
+            file path
+
+         num : int
+            number identifier of the file across all folders
          """
-        self.file = file            # Pathlib object
+        self.path = path            # Pathlib object
         self.num = num              # identifier (int)
         self.time = None  # stores time when Series._measure_times() is called
 
@@ -29,11 +35,11 @@ class File:
 
     @property
     def folder(self):
-        return self.file.parent
+        return self.path.parent
 
     @property
     def name(self):
-        return self.file.name
+        return self.path.name
 
 
 class Series:
@@ -95,7 +101,7 @@ class Series:
     def _measure_times(self):
         """Define time (unix) associated with each file (subclass if necessary)."""
         for file in self.files:
-            file.time = file.file.stat().st_mtime
+            file.time = file.path.stat().st_mtime
         self.times_set = True
 
     # =========================== Public methods =============================
@@ -198,3 +204,25 @@ class Series:
             return datetime.timedelta(seconds=float(dt_s))
         else:
             raise AttributeError('File timing info missing.')
+
+    @property
+    def nums(self):
+        """Iterator (sliceable) of file identifiers.
+
+        Examples
+        --------
+        Allows the user to do e.g.
+        >>> for num in files.nums[::3]:
+        >>>     files.read(num)
+        """
+        return range(len(self.files))
+
+    @property
+    def ntot(self):
+        """Total number of files in the series.
+
+        Returns
+        -------
+        int
+        """
+        return len(self.nums)
