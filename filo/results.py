@@ -36,16 +36,26 @@ class ResultsBase(ABC):
         ----------
         filename : str
             File name without extension
+
+        Returns
+        -------
+        str
+            file name
         """
         return self.default_filename if filename is None else filename
 
-    def _set_file(self, filename, kind):
+    def _set_filepath(self, filename, kind):
         """Return file depending on input filename and kind (data or metadata)
 
         Parameters
         ----------
         filename : str
             File name without extension
+
+        Returns
+        -------
+        pathlib.Path
+            file path
         """
         if kind == 'data':
             extension = self.data_extension
@@ -127,8 +137,8 @@ class ResultsBase(ABC):
             Data in the form specified by user in _load_data()
             Typically a pandas dataframe.
         """
-        file = self._set_file(filename, kind='data')
-        return self._load_data(file=file)
+        filepath = self._set_filepath(filename, kind='data')
+        return self._load_data(filepath=filepath)
 
     def save_data(self, data, filename=None):
         """Save analysis data to file.
@@ -151,8 +161,8 @@ class ResultsBase(ABC):
         -------
         None
         """
-        file = self._set_file(filename, kind='data')
-        self._save_data(data=data, file=file)
+        filepath = self._set_filepath(filename, kind='data')
+        self._save_data(data=data, filepath=filepath)
 
     def load_metadata(self, filename=None):
         """Return analysis metadata from file as a dictionary.
@@ -171,8 +181,8 @@ class ResultsBase(ABC):
         dict
             Metadata in the form of a dictionary
         """
-        file = self._set_file(filename, kind='metadata')
-        return self._load_metadata(file=file)
+        filepath = self._set_filepath(filename, kind='metadata')
+        return self._load_metadata(filepath=filepath)
 
     def save_metadata(self, metadata, filename=None):
         """Save analysis metadata (dict) to file.
@@ -193,20 +203,20 @@ class ResultsBase(ABC):
         -------
         None
         """
-        file = self._set_file(filename, kind='metadata')
-        self._save_metadata(metadata=metadata, file=file)
+        filepath = self._set_filepath(filename, kind='metadata')
+        self._save_metadata(metadata=metadata, filepath=filepath)
 
     # ------------------------------------------------------------------------
     # ===================== To be defined in subclasses ======================
     # ------------------------------------------------------------------------
 
     @abstractmethod
-    def _load_data(self, file):
+    def _load_data(self, filepath):
         """Return analysis data from file.
 
         Parameters
         ----------
-        file : pathlib.Path object
+        filepath : pathlib.Path object
             file to load the data from
 
         Returns
@@ -218,7 +228,7 @@ class ResultsBase(ABC):
         pass
 
     @abstractmethod
-    def _save_data(self, data, file):
+    def _save_data(self, data, filepath):
         """Write data to file
 
         Parameters
@@ -227,7 +237,7 @@ class ResultsBase(ABC):
             Data in the form specified by user in _load_data()
             Typically a pandas dataframe.
 
-        file : pathlib.Path object
+        filepath : pathlib.Path object
             file to load the metadata from
 
         Returns
@@ -237,12 +247,12 @@ class ResultsBase(ABC):
         pass
 
     @abstractmethod
-    def _load_metadata(self, file):
+    def _load_metadata(self, filepath):
         """Return analysis metadata from file as a dictionary.
 
         Parameters
         ----------
-        file : pathlib.Path object
+        filepath : pathlib.Path object
             file to load the metadata from
 
         Returns
@@ -253,7 +263,7 @@ class ResultsBase(ABC):
         pass
 
     @abstractmethod
-    def _save_metadata(self, metadata, file):
+    def _save_metadata(self, metadata, filepath):
         """Write metadata to file
 
         Parameters
@@ -261,7 +271,7 @@ class ResultsBase(ABC):
         metadata : dict
             Metadata as a dictionary
 
-        file : pathlib.Path object
+        filepath : pathlib.Path object
             file to load the metadata from
 
         Returns

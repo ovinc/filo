@@ -45,7 +45,7 @@ The list of file objects is accessed through the list `Series.files` containing 
 
 #### Read-only properties
 (derived from regular attributes and methods)
-- `info`: pandas DataFrame containing info (number, folder, file, time) time of files; re-calculated every time `self.info` is called and thus reflects changes in `self.files`.
+- `info`: pandas DataFrame containing info (number, folder, filename, time) time of files; re-calculated every time `self.info` is called and thus reflects changes in `self.files`.
 - `duration`: datetime.Timedelta object, time difference between last file and first file in the series
 
 
@@ -73,6 +73,7 @@ series = Series(paths=['img1', 'img2'], savepath='analysis', extension='.png')
 
 # Access individual files in the file series ---------------------------------
 series.files[0]        # first file in the first folder
+series.files[3].path   # actual pathlib object
 series.files[55].num   # should always be equal to 55
 series.files[10].time  # unix time of file creation
 
@@ -92,10 +93,10 @@ series.save_info('FileSeries_Info_New.txt')  # save updated info into new txt fi
 This is a base class to store analysis results and associated metadata (e.g. from file series such as images or spectra) and save them to files, or load the data/metadata from these files.
 
 The class needs to be subclassed by redefining the following methods:
-- `_load_data(self, file)`
-- `_save_data(self, data, file)`
-- `_load_metadata(self, file)`
-- `_save_metadata(self, metadata, file)`
+- `_load_data(self, filepath)`
+- `_save_data(self, data, filepath)`
+- `_load_metadata(self, filepath)`
+- `_save_metadata(self, metadata, filepath)`
 
 Then it provides the following methods and attributes:
 
@@ -153,4 +154,3 @@ License
 =======
 
 3-clause BSD (see *LICENSE* file)
-

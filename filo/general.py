@@ -17,8 +17,8 @@ def list_files(path='.', extension=''):
     folder = Path(path)
     pattern = '*' + extension
     paths = folder.glob(pattern)
-    files = [p for p in paths if p.is_file()]
-    return sorted(files)
+    filepaths = [p for p in paths if p.is_file()]
+    return sorted(filepaths)
 
 
 def list_all(path='.'):
@@ -35,11 +35,11 @@ def move_files(src='.', dst='.', extension=''):
     - directory dst is created if not already existing
     """
     p1, p2 = Path(src), Path(dst)
-    files = list_files(p1, extension)
+    filepaths = list_files(p1, extension)
     p2.mkdir(exist_ok=True)
-    for file in files:
-        newfile = p2 / file.name
-        file.rename(newfile)
+    for filepath in filepaths:
+        newfilepath = p2 / filepath.name
+        filepath.rename(newfilepath)
 
 
 def move_all(src='.', dst='.'):
@@ -76,11 +76,11 @@ def batch_file_rename(name, newname, path='.'):
     - modification, creation dates etc. not changed in the process.
     """
     folder = Path(path)
-    files = folder.glob(f'**/{name}')
+    filepaths = folder.glob(f'**/{name}')
 
-    for file in files:
-        newfile = file.with_name(newname)
-        file.rename(newfile)
+    for filepath in filepaths:
+        newfilepath = filepath.with_name(newname)
+        filepath.rename(newfilepath)
 
 
 # =================== Functions for csv saving and reading ===================
@@ -100,10 +100,17 @@ def line_to_data(line, sep='\t', dtype=float):
     return tuple(data_list)
 
 
-def load_csv(file, sep=',', skiprows=0):
-    """Load csv file into a list of lists, similar to numpy.genfromtxt()"""
+def load_csv(filepath, sep=',', skiprows=0):
+    """Load csv file into a list of lists, similar to numpy.genfromtxt()
+
+    Parameters
+    ----------
+    filepath : str or pathlib.Path
+    sep : str
+    skiprows : int
+    """
     data = []
-    with open(file, 'r') as f:
+    with open(filepath, 'r') as f:
         for i, line in enumerate(f.readlines()):
             if i < skiprows:
                 continue

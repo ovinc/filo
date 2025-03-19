@@ -20,10 +20,10 @@ class File:
         Parameters
         ----------
 
-         file: pathlib.Path
+        path : pathlib.Path
             file path
 
-         num : int
+        num : int
             number identifier of the file across all folders
          """
         self.path = path            # Pathlib object
@@ -88,9 +88,9 @@ class Series:
         files = []
         n = 0  # shift in measurement number if multiple folders
         for i_folder, folder in enumerate(self.folders):
-            for i_local, file in enumerate(list_files(folder, self.extension)):
+            for i_local, filepath in enumerate(list_files(folder, self.extension)):
                 num = i_local + n
-                files.append(File(file, num))
+                files.append(File(path=filepath, num=num))
             else:
                 try:
                     n += i_local + 1
@@ -170,7 +170,7 @@ class Series:
             filename = data.at[num, 'filename']
             foldername = data.at[num, 'folder']
             filepath = self.savepath / foldername / filename
-            file = File(filepath, num)
+            file = File(path=filepath, num=num)
             if self.times_set:
                 file.time = data.at[file.num, 'time (unix)']
             self.files.append(file)
