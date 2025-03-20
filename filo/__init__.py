@@ -5,11 +5,13 @@ from .general import batch_file_rename
 from .general import load_csv, data_to_line, line_to_data
 from .general import make_iterable
 
-from .series import Series
+from .series import File, FileSeries
 
 from .results import ResultsBase
 
 from .viewers import KeyPressSlider, DataViewerBase
+
+from .readers import FileSeriesReaderBase
 
 # from importlib.metadata import version  # only for python 3.8+
 from importlib_metadata import version

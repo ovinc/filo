@@ -1,4 +1,4 @@
-"""Manage Series of experimental data in potentially several folders."""
+"""Manage FileSeries of experimental data in potentially several folders."""
 
 import os
 from pathlib import Path
@@ -12,26 +12,57 @@ from .general import make_iterable, list_files
 # ================================= Classes ==================================
 
 class File:
-    """Individual file among the series of files. Used by Series"""
+    """Individual file among the series of files. Used by FileSeries"""
 
-    def __init__(self, path, num):
+    def __init__(self, path, num=None, unix_time=None):
         """Init File object
 
         Parameters
         ----------
 
-        path : pathlib.Path
+        path : str or pathlib.Path
             file path
 
-        num : int
+        num : int [optional]
             number identifier of the file across all folders
+
+        unix_time : float [optional]
+            if None, will be caculated automatically from file modification time
          """
-        self.path = path            # Pathlib object
-        self.num = num              # identifier (int)
-        self.time = None  # stores time when Series._measure_times() is called
+        self.path = Path(path)
+        self.num = num
+
+        if unix_time is None:
+            self.unix_time = self.get_unix_time()
+        else:
+            self.unix_time = unix_time
 
     def __repr__(self):
         return f"filo.File #{self.num} [{self.name} in folder '{self.folder}']"
+
+    def __eq__(self, other):
+        condition1 = self.path == other.path
+        condition2 = self.num == other.num
+        return condition1 & condition2
+
+    def __hash__(self):
+        return hash(self.path)
+
+    def get_unix_time(self):
+        """Automatically get unix time from file creation/modification time"""
+        return self.path.stat().st_mtime
+
+    @property
+    def datetime(self):
+        """Returns datetime.datetime object from unix_time"""
+        if self.unix_time is not None:
+            return datetime.datetime.fromtimestamp(self.unix_time)
+
+    @datetime.setter
+    def datetime(self, value):
+        raise AttributeError(
+            'File.datetime not settable ; use File.unix_time instead'
+        )
 
     @property
     def folder(self):
@@ -42,153 +73,165 @@ class File:
         return self.path.name
 
 
-class Series:
-    """Class to manage series of experimental data in one or several folders."""
+class FileSeries:
+    """Class to manage series of files in one or several folders."""
 
-    name = 'File series'
-    info_filename = 'FileSeries_Info.txt'
-
-    def __init__(self, paths='.', extension='', savepath='.'):
-        """Init series of spectra object.
+    def __init__(self, files, refpath='.'):
+        """Init file series object.
 
         Parameters
         ----------
-        - paths can be a string, path object, or a list of str/paths if data
-          is stored in multiple folders.
-        - extension: extension of files to be considered (e.g. '.txt')
-        - savepath: folder in which to save analysis data if applicable.
+        files : iterable of filo.File objects
+
+        refpath : {str, pathlib.Path}, optional
+            reference path from which folders are expressed from in the
+            info attribute and when saving to CSV.
         """
-        self.savepath = Path(savepath)
-        self.savepath.mkdir(exist_ok=True)  # create savepath if does not exist.
-
-        if type(paths) is str:
-            self.folders = paths,
-        else:
-            self.folders = make_iterable(paths)
-        self.folders = [Path(folder) for folder in self.folders]
-        self.extension = extension
-
-        self.times_set = False  # True when file times are set (e.g. by measure_time())
-
-        self.files = self._list_files()  # empty list if no files in folder.
-        self._measure_times()             # add creation time info
+        self._files = files
+        self.folders = self._list_folders()
+        self.refpath = Path(refpath)
 
     def __repr__(self):
-        return f"{self.__class__.name} [extension '{self.extension}', "\
-               f'folders {[str(folder) for folder in self.folders]}, '\
-               f"savepath '{self.savepath}', {len(self.files)} files]"
+        relative_folders = [
+            os.path.relpath(folder, self.refpath) for folder in self.folders
+        ]
+        return (
+            f"{self.__class__} in {self.refpath} / {relative_folders}, "
+            f"{len(self._files)} files]"
+        )
 
-    # =================== Private methods to get files info ==================
+    def __getitem__(self, key):
+        """To make file series indexable and sliceable."""
+        return self._files[key]
 
-    def _list_files(self):
-        """Create list of filo.File objects from files in self.folders.
+    # --------------------------- Misc. init tools ---------------------------
 
-        Return a list of filo.File objects.
+    def _list_folders(self):
+        """Detect the various folders the files are in from self._files"""
+        folders = []
+        for file in self._files:
+            if file.folder not in folders:
+                folders.append(file.folder)
+        return folders
+
+    @staticmethod
+    def _detect_files(folders, extension):
+        """Create list of filo.File objects by automatic detection in folders.
+
+        Used by Files.auto()
+
+        Parameters
+        ----------
+        folders : iterable of pathlib.Path
+        extension : str
+
+        Returns
+        -------
+        list
+            list of filo.File objects.
         """
         files = []
-        n = 0  # shift in measurement number if multiple folders
-        for i_folder, folder in enumerate(self.folders):
-            for i_local, filepath in enumerate(list_files(folder, self.extension)):
-                num = i_local + n
+        num = -1
+        for folder in folders:
+            for filepath in list_files(folder, extension):
+                num += 1
                 files.append(File(path=filepath, num=num))
-            else:
-                try:
-                    n += i_local + 1
-                except UnboundLocalError:  # no data in folder
-                    pass
         return files
 
-    def _measure_times(self):
-        """Define time (unix) associated with each file (subclass if necessary)."""
-        for file in self.files:
-            file.time = file.path.stat().st_mtime
-        self.times_set = True
+    # ============= Class methods to generate FileSeries objects =============
+
+    @classmethod
+    def auto(cls, folders='.', extension='', refpath='.'):
+        """Create file series by automatic detection of files in paths or folders
+
+        Parameters
+        ----------
+        folders : str, pathlib.Path ot iterable of those
+            can be a string, path object, or a list of str/paths if data
+            is stored in multiple folders.
+
+        extension : str
+            extension of files to be considered (e.g. '.txt')
+
+        refpath : {str, pathlib.Path}, optional
+            reference path from which folders are expressed from in the
+            info attribute and when saving to CSV.
+
+        Returns
+        -------
+        filo.FileSeries
+        """
+        if type(folders) is str:
+            folders = folders,
+        else:
+            folders = make_iterable(folders)
+        files = cls._detect_files(folders=folders, extension=extension)
+        return cls(files=files, refpath=refpath)
+
+    @classmethod
+    def from_csv(cls, filepath, sep='\t', refpath='.'):
+        """Create file series using information stored in csv file
+
+        The columns need to contian at least 'num', 'folder', 'filename' and
+        'time (unix)'.
+
+        Parameters
+        ----------
+        filepath : {str, pathlib.Path}
+            file in which info on the file series is stored
+
+        sep : str
+            separator used in the CSV file
+
+        refpath : {str, pathlib.Path}, optional
+            reference path from which folders are expressed from in the
+            CSV file.
+
+        Returns
+        -------
+        filo.FileSeries
+        """
+        files = []
+        data = pd.read_csv(filepath, sep=sep).set_index('num')
+        for num in data.index:
+            filename = data.at[num, 'filename']
+            foldername = data.at[num, 'folder']
+            unix_time = data.at[num, 'time (unix)']
+            filepath = Path(refpath) / foldername / filename
+            files.append(File(path=filepath, num=num, unix_time=unix_time))
+        return cls(files=files, refpath=refpath)
 
     # =========================== Public methods =============================
 
     @property
     def info(self):
-        """Get time of files from creation date (st_mtime).
+        """Dataframe with all file info.
 
-        Output
+        Returns
         ------
         pandas dataframe with 'num' as index and 'time (unix)', folder, filename
         as columns.
         """
-        nums = [file.num for file in self.files]
-        filenames = [file.name for file in self.files]
-        dirs = [os.path.relpath(f.folder, self.savepath) for f in self.files]
+        data = {
+            'num': [file.num for file in self._files],
+            'folder': [os.path.relpath(f.folder, self.refpath) for f in self._files],
+            'filename': [file.name for file in self._files],
+            'time (unix)': [file.unix_time for file in self._files],
+        }
+        return pd.DataFrame(data).set_index('num')
 
-        columns = ['num', 'folder', 'filename']
-        info = zip(nums, dirs, filenames)
-        data = pd.DataFrame(info, columns=columns)
-        data.set_index('num', inplace=True)
+    def to_csv(self, filepath, sep='\t'):
+        """Save info DataFrame (see self.info property) into csv file."""
+        self.info.to_csv(filepath, sep=sep)
 
-        if self.times_set:
-            times = [file.time for file in self.files]
-            data['time (unix)'] = times
+    def update_times(self, filepath, sep='\t'):
+        """Update file times using info contained in csv file.
 
-        return data
-
-    def save_info(self, filename=None, sep='\t'):
-        """Save info DataFrame (see self.info property) into csv file.
-
-        Use default filename if filename is None, else specified name.
-        The file is created in self.savepath (default current directory).
+        Only nums present in the csv data will be updated
         """
-        filename = self.info_filename if filename is None else filename
-        data = self.info  # pandas dataframe (see self.times below)
-        time_file = Path(self.savepath) / filename
-        data.to_csv(time_file, sep=sep)
-
-    def load_info(self, filename=None, sep='\t'):
-        """Update files list and infos DataFrame using csv-saved data.
-
-        Data must be saved in a csv file in self.savepath, with csv separator
-        `sep`, and with columns (at least) 'num', 'folder', 'filename'.
-        If timing info is available (column 'time (unix)'), file.time is set
-        as well.
-
-        No output (self.files and self.info are updated).
-        """
-        filename = self.info_filename if filename is None else filename
-        data_file = Path(self.savepath) / filename
-        data = pd.read_csv(data_file, sep=sep)
-        data.set_index('num', inplace=True)
-
-        # Check if there is time info ----------------------------------------
-        try:
-            data['time (unix)']
-        except KeyError:
-            self.times_set = False
-        else:
-            self.times_set = True
-
-        # Update file information in the list of filo.File objects -----------
-        self.files = []
-        for num in data.index:
-            filename = data.at[num, 'filename']
-            foldername = data.at[num, 'folder']
-            filepath = self.savepath / foldername / filename
-            file = File(path=filepath, num=num)
-            if self.times_set:
-                file.time = data.at[file.num, 'time (unix)']
-            self.files.append(file)
-
-    def load_time(self, filename=None, sep='\t'):
-        """Same as load_files but updates only times, not file info.
-
-        The data in filename must be csv with as least columns 'num' and
-        'time (unix)'. All nums in self.files must be present in the data.
-        """
-        filename = self.info_filename if filename is None else filename
-        data_file = Path(self.savepath) / filename
-        data = pd.read_csv(data_file, sep=sep)
-        data.set_index('num', inplace=True)
-
-        # Update file information in the list of filo.File objects -----------
-        for file in self.files:
-            file.time = data.at[file.num, 'time (unix)']
+        time_data = pd.read_csv(filepath, sep=sep).set_index('num')
+        for num in time_data.index:
+            self._files[num].unix_time = time_data.at[num, 'time (unix)']
 
     @property
     def duration(self):
@@ -198,31 +241,88 @@ class Series:
         ------
         datetime.Timedelta object.
         """
-        if self.times_set:
-            t = 'time (unix)'
-            dt_s = self.info[t].iloc[-1] - self.info[t].iloc[0]
-            return datetime.timedelta(seconds=float(dt_s))
-        else:
-            raise AttributeError('File timing info missing.')
+        t = self.info['time (unix)']
+        dt_s = t.iloc[-1] - t.iloc[0]
+        return datetime.timedelta(seconds=float(dt_s))
 
-    @property
-    def nums(self):
-        """Iterator (sliceable) of file identifiers.
 
-        Examples
-        --------
-        Allows the user to do e.g.
-        >>> for num in files.nums[::3]:
-        >>>     files.read(num)
-        """
-        return range(len(self.files))
 
-    @property
-    def ntot(self):
-        """Total number of files in the series.
 
-        Returns
-        -------
-        int
-        """
-        return len(self.nums)
+# class DataSeries:
+#     """Class to manage series of experimental data but not necessarily
+#     connected to actual files.
+
+#     Compared to FileSeries, it adds the possibility to define transforms
+#     and corrections, and to use caching when loading the data.
+#     It also offers the opportunity to define viewers and data readers.
+#     """
+
+#     def __init__(
+#         self,
+#         savepath='.',
+#         corrections=None,
+#         transforms=None,
+#         cache=False,
+#         file_cache_size=128,
+#         transform_cache_size=128,
+#         Viewer=None,
+#         Reader=None,
+#     ):
+#         """Init data series object.
+
+#         Parameters
+#         ----------
+
+#         corrections : iterable of str
+#             iterable of names of corrections to consider
+#             (their order indicates the order in which they are applied),
+#             e.g. corrections=('flicker', 'shaking');
+#             if None, use default order.
+
+#         transforms : iterable of str
+#             iterable of names of transforms to consider
+#             (their order indicates the order in which they are applied),
+#             e.g. transforms=('rotation', 'crop', 'filter');
+#             if None, use default order.
+
+#         cache : bool
+#             if True, use caching for speed improvement
+#             (both for loading files and transforms)
+#             this is useful when calling read() multiple times on the same
+#             image (e.g. when inspecting series/stacks)
+
+#         file_cache_size : int
+#             How many files can be loaded in the cache (if cache=True, files are
+#             read only once and stored in memory unless they exceed this limit).
+#             Prefer using power of 2 for cache efficiency.
+
+#         transform_cache_size : int
+#             The calculation from loaded data into transformed data can also be
+#             cached : see file_cache_size
+#         """
+#         self.savepath = Path(savepath)
+#         self.corrections = corrections
+#         self.transforms = transforms
+#         self.cache = cache
+
+#         @property
+#     def nums(self):
+#         """Iterator (sliceable) of file identifiers.
+
+#         Examples
+#         --------
+#         Allows the user to do e.g.
+#         >>> for num in files.nums[::3]:
+#         >>>     files.read(num)
+#         """
+#         return range(len(self._files))
+
+#     @property
+#     def ntot(self):
+#         """Total number of files in the series.
+
+#         Returns
+#         -------
+#         int
+#         """
+#         return len(self.nums)

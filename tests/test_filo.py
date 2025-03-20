@@ -2,13 +2,13 @@
 
 import filo
 from pathlib import Path
-from filo import Series
+from filo import FileSeries
 
 module_path = Path(filo.__file__).parent / '..'
 data_path = module_path / 'data'
 
 folders = data_path / 'img1', data_path / 'img2'
-series = Series(folders, savepath=data_path, extension='.png')
+series = FileSeries(folders, savepath=data_path, extension='.png')
 
 
 def test_series_numbering():

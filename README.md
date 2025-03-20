@@ -1,7 +1,7 @@
 About
 =====
 
-**filo** is a Python 3 package for file management. Its main purpose is to provide a `Series` class to manage series of files (e.g. series of images or series of spectra), that use a custom `File` class. In particular, file creation time is detected automatically and can be accessed as a *pandas* dataframe.
+**filo** is a Python 3 package for file management. Its main purpose is to provide a `FileSeries` class to manage series of files (e.g. series of images or series of spectra), that use a custom `File` class. In particular, file creation time is detected automatically and can be accessed as a *pandas* dataframe.
 
 The package also provides a `ResultsBase` base class to store data and metadata and save/load them into/from files.
 
@@ -18,7 +18,7 @@ Contents
 ========
 
 
-`Series` class
+`FileSeries` class
 --------------
 
 Class to manage series of files of the same type (e.g. image series or spectra series from time-lapse experiments), possibly spread out across multiple folders. The main purpose of the class is to be subclassed in other modules specialized for analysis of specific experiment types, but it can be used as is, i.e. to extract timing info of series of files.
@@ -27,15 +27,15 @@ The main idea is that files are attributed a unique identifier (`num`) that star
 
 **Note**: the time attribute is automatically extracted as the creation time of the file (*st_mtime*), but can be overwritten with external information, or can be defined differently by subclassing the `_measure_times()` method.
 
-The list of file objects is accessed through the list `Series.files` containing all `filo.File` objects (`Series.files[i]` is the file object with identifier `num=i`). The correspondence between identifier, actual files, and file times is summarized in the `Series.info` attribute, which is a pandas DataFrame tied to `Series.files`, and which can be saved into a csv file. Loading options also exist to update file data using data stored in external files.
+The list of file objects is accessed through the list `FileSeries.files` containing all `filo.File` objects (`FileSeries.files[i]` is the file object with identifier `num=i`). The correspondence between identifier, actual files, and file times is summarized in the `FileSeries.info` attribute, which is a pandas DataFrame tied to `FileSeries.files`, and which can be saved into a csv file. Loading options also exist to update file data using data stored in external files.
 
 
-### `Series` Methods
+### `FileSeries` Methods
 - `save_info()`: save info of files into csv file,
 - `load_info()`: load info of files from csv file (overwrites `self.files`),
 - `load_time()`: keep current file info but only update time from info in csv file.
 
-### `Series` Attributes and properties
+### `FileSeries` Attributes and properties
 
 #### Regular attributes
 - `folders`: list of folders (`pathlib.Path` objects) across which the file series is spread,
@@ -51,10 +51,10 @@ The list of file objects is accessed through the list `Series.files` containing 
 
 ### `File` objects
 
-File objects listed in `Series.files` have the following attributes:
+File objects listed in `FileSeries.files` have the following attributes:
 - `path`: Pathlib object of the file,
 - `num`: identifier of file within (int). In the series context, `num` starts at 0 in the first folder,
-- `time`: stores unix time (float, in seconds) when `Series.set_times()` is called,
+- `time`: stores unix time (float, in seconds) when `FileSeries.set_times()` is called,
 
 with the following additional read-only properties derived from the ones above for convenience
 - `folder` Pathlib object of the parent directory containing the file,
@@ -63,13 +63,13 @@ with the following additional read-only properties derived from the ones above f
 
 ### Examples
 
-(See **ExampleSeries.ipynb** for examples with actual data).
+(See **ExampleFileSeries.ipynb** for examples with actual data).
 
 ```python
-from filo import Series
+from filo import FileSeries
 
 # create series object of .png files located in 2 folders img1 and img2 ------
-series = Series(paths=['img1', 'img2'], savepath='analysis', extension='.png')
+series = FileSeries(paths=['img1', 'img2'], savepath='analysis', extension='.png')
 
 # Access individual files in the file series ---------------------------------
 series.files[0]        # first file in the first folder
@@ -79,12 +79,12 @@ series.files[10].time  # unix time of file creation
 
 # Manage the infos DataFrame -------------------------------------------------
 series.info         # see all file info in form of a pandas DataFrame
-series.save_info()  # save info into 'FileSeries_Info.txt' (filename can be specified)
+series.save_info()  # save info into 'FileFileSeries_Info.txt' (filename can be specified)
 
-# Update Series.files objects and Series.info --------------------------------
+# Update FileSeries.files objects and FileSeries.info --------------------------------
 series.load_info('Other_File_Info.txt')  # update all file data using data from external file
 series.load_time('Other_File_Info.txt')   # update time information but keep other info
-series.save_info('FileSeries_Info_New.txt')  # save updated info into new txt file
+series.save_info('FileFileSeries_Info_New.txt')  # save updated info into new txt file
 ```
 
 `ResultsBase` class
@@ -141,7 +141,7 @@ Requirements
 ============
 (installed automatically by pip if necessary)
 - python >= 3.6
-- pandas (for managing data in `Series` class)
+- pandas (for managing data in `FileSeries` class)
 - matplotlib (for interactive inspection of series data)
 - importlib-metadata
 
