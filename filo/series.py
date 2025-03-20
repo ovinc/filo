@@ -1,8 +1,9 @@
 """Manage FileSeries of experimental data in potentially several folders."""
 
 import os
-from pathlib import Path
 import datetime
+from pathlib import Path
+from collections import OrderedDict
 
 import pandas as pd
 
@@ -247,82 +248,213 @@ class FileSeries:
 
 
 
+class DataSeries:
+    """Class to manage series of experimental data but not necessarily
+    connected to actual files.
 
-# class DataSeries:
-#     """Class to manage series of experimental data but not necessarily
-#     connected to actual files.
+    It offers the possibility to define transforms and corrections,
+    and to use caching when loading the data.
+    It also offers the opportunity to define viewers and data readers.
+    """
 
-#     Compared to FileSeries, it adds the possibility to define transforms
-#     and corrections, and to use caching when loading the data.
-#     It also offers the opportunity to define viewers and data readers.
-#     """
+    def __init__(
+        self,
+        savepath='.',
+        corrections=(),
+        transforms=(),
+        reader=None,
+        viewer=None,
+    ):
+        """Init data series object.
 
-#     def __init__(
-#         self,
-#         savepath='.',
-#         corrections=None,
-#         transforms=None,
-#         cache=False,
-#         file_cache_size=128,
-#         transform_cache_size=128,
-#         Viewer=None,
-#         Reader=None,
-#     ):
-#         """Init data series object.
+        Parameters
+        ----------
+        savepath : {str, pathlib.Path}, optional
 
-#         Parameters
-#         ----------
+        corrections : iterable
+            Iterable of correction objects
+            (their order indicates the order in which they are applied),
 
-#         corrections : iterable of str
-#             iterable of names of corrections to consider
-#             (their order indicates the order in which they are applied),
-#             e.g. corrections=('flicker', 'shaking');
-#             if None, use default order.
+        transforms : iterable
+            Iterable of transform objects
+            (their order indicates the order in which they are applied)
 
-#         transforms : iterable of str
-#             iterable of names of transforms to consider
-#             (their order indicates the order in which they are applied),
-#             e.g. transforms=('rotation', 'crop', 'filter');
-#             if None, use default order.
+        reader : subclass of ReaderBase
+            object that defines how to read images
 
-#         cache : bool
-#             if True, use caching for speed improvement
-#             (both for loading files and transforms)
-#             this is useful when calling read() multiple times on the same
-#             image (e.g. when inspecting series/stacks)
+        viewer : subclass of ViewerBase
+            which viewer to use for show(), inspect() etc.
+        """
+        self.savepath = Path(savepath)
 
-#         file_cache_size : int
-#             How many files can be loaded in the cache (if cache=True, files are
-#             read only once and stored in memory unless they exceed this limit).
-#             Prefer using power of 2 for cache efficiency.
+        self.corrections = OrderedDict()
+        self.transforms = OrderedDict()
 
-#         transform_cache_size : int
-#             The calculation from loaded data into transformed data can also be
-#             cached : see file_cache_size
-#         """
-#         self.savepath = Path(savepath)
-#         self.corrections = corrections
-#         self.transforms = transforms
-#         self.cache = cache
+        for correction in corrections:
+            self.corrections[correction.name] = correction
+            setattr(self, correction.name, correction)
 
-#         @property
-#     def nums(self):
-#         """Iterator (sliceable) of file identifiers.
+        for transform in transforms:
+            self.transforms[transform.name] = transform
+            setattr(self, transform.name, transform)
 
-#         Examples
-#         --------
-#         Allows the user to do e.g.
-#         >>> for num in files.nums[::3]:
-#         >>>     files.read(num)
-#         """
-#         return range(len(self._files))
+        self.reader = reader
+        self.viewer = viewer
 
-#     @property
-#     def ntot(self):
-#         """Total number of files in the series.
+    # ===================== Corrections and  Transforms ======================
 
-#         Returns
-#         -------
-#         int
-#         """
-#         return len(self.nums)
+    @property
+    def active_corrections(self):
+        active_corrs = []
+        for correction_name, correction in self.corrections.items():
+            if not correction.is_empty:
+                active_corrs.append(correction_name)
+        return active_corrs
+
+    def reset_corrections(self):
+        """Reset all active corrections."""
+        for correction in self.corrections:
+            correction.reset()
+
+    @property
+    def active_transforms(self):
+        active_corrs = []
+        for transform_name, transform in self.transforms.items():
+            if not transform.is_empty:
+                active_corrs.append(transform_name)
+        return active_corrs
+
+    def reset_transforms(self):
+        """Reset all active transforms."""
+        for transform in self.transforms:
+            transform.reset()
+
+    # =========================== Cache management ===========================
+
+    def cache_info(self):
+        """cache info of the various caches in place.
+
+        Returns
+        -------
+        dict
+            with the cache info corresponding to 'files' and 'transforms'
+        """
+        if not self.reader.cache:
+            return None
+        return {
+            name: method.cache_info()
+            for name, method in self.reader.cached_methods.items()
+        }
+
+    def clear_cache(self, which=None):
+        """Clear specified cache.
+
+        Parameters
+        ----------
+        which : str or None
+            can be 'files' or 'transforms'
+            (default: None, i.e. clear both)
+
+        Returns
+        -------
+        None
+        """
+        if not self.reader.cache:
+            return
+
+        if which in ('files', 'transforms'):
+            self.reader.cached_methods[which].cache_clear()
+        elif which is None:
+            for method in self.reader.cached_methods.values():
+                method.cache_clear()
+        else:
+            raise ValueError(f'{which} not a valid cache name.')
+
+    # ============================= Main methods =============================
+
+    def read(self, num=0, correction=True, transform=True, **kwargs):
+        """Read and return data of identifier num
+
+        Parameters
+        ----------
+        num : int
+            data identifier
+
+        correction : bool
+            By default, if corrections are defined on the image
+            (flicker, shaking etc.), then they are applied here.
+            Put correction=False to only load the raw image in the stack.
+
+        transform : bool
+            By default, if transforms are defined on the image
+            (rotation, crop etc.), then they are applied here.
+            Put transform=False to only load the raw image in the stack.
+
+        **kwargs
+            by default if transform=True, all active transforms are applied.
+            Set any transform name to False to not apply this transform.
+            e.g. images.read(subtraction=False).
+
+        Returns
+        -------
+        array_like
+            Image data as an array
+        """
+        return self.reader.read(
+            num=num,
+            correction=correction,
+            transform=transform,
+            **kwargs,
+        )
+
+    # ==================== Interactive inspection methods ====================
+
+    def show(self, num=0, **kwargs):
+        """Show image in a matplotlib window.
+
+        Parameters
+        ----------
+        num : int
+            image identifier in the file series
+
+        **kwargs
+            any keyword-argument to pass to the viewer
+        """
+        return self.viewer.show(num=num, **kwargs)
+
+    def inspect(self, start=0, end=None, skip=1, **kwargs):
+        """Interactively inspect image series.
+
+        Parameters
+        ----------
+        start : int
+        end : int
+        skip : int
+            images to consider. These numbers refer to 'num' identifier which
+            starts at 0 in the first folder and can thus be different from the
+            actual number in the image filename
+
+        **kwargs
+            any keyword-argument to pass to the viewer
+        """
+        return self.viewer.inspect(nums=self.nums[start:end:skip], **kwargs)
+
+    def animate(self, start=0, end=None, skip=1, blit=False, **kwargs):
+        """Interactively inspect image stack.
+
+        Parameters
+        ----------
+        start : int
+        end : int
+        skip : int
+            images to consider. These numbers refer to 'num' identifier which
+            starts at 0 in the first folder and can thus be different from the
+            actual number in the image filename
+
+        blit : bool
+            use blitting for faster rendering (default False)
+
+        **kwargs
+            any keyword-argument to pass to the viewer
+        """
+        return self.viewer.animate(nums=self.nums[start:end:skip], blit=blit, **kwargs)

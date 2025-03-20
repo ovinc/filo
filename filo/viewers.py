@@ -105,6 +105,7 @@ class DataViewerBase:
         """Show a single, non-animated image (num: image number)."""
         self._create_figure()
         self._connect_events()
+        self.plot_init_done = False
         self._plot(num=num)
         return self.axs
 

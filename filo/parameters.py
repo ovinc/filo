@@ -17,7 +17,7 @@ class ParameterBase:
         self.data = {}
 
     def __repr__(self):
-        return f'{self.parameter_name.capitalize()} {self.data}'
+        return f'{self.name.capitalize()} {self.data}'
 
     def reset(self):
         """Reset parameter data (e.g. rotation angle zero, ROI = total image, etc.)"""
@@ -31,12 +31,12 @@ class ParameterBase:
 
     @property
     @abstractmethod
-    def parameter_name(self):
-        """Must define a property or class attribute parameter_name (str)"""
+    def name(self):
+        """Must define a property or class attribute name (str)"""
         pass
 
 
-class TransformParameter(ParameterBase):
+class TransformParameterBase(ParameterBase):
     """Base class for global transorms on image series (rotation, crop etc.)
 
     These parameters DO impact analysis and are stored in metadata.
@@ -44,7 +44,8 @@ class TransformParameter(ParameterBase):
     @property
     def order(self):
         # Order in which transform is applied if several transforms defined
-        return self.data_series.transforms.index(self.parameter_name)
+        transform_list = list(self.data_series.transforms)
+        return transform_list.index(self.name)
 
     def reset(self):
         """Reset parameter data (e.g. rotation angle zero, ROI = total image, etc.)"""
@@ -63,8 +64,8 @@ class TransformParameter(ParameterBase):
     # ============================= To subclass ==============================
 
     @abstractmethod
-    def apply(self, img):
-        """How to apply the transform on an image array
+    def apply(self, data):
+        """How to apply the transform on data
 
         To be defined in subclasses.
 
@@ -90,19 +91,23 @@ class TransformParameter(ParameterBase):
         pass
 
 
-class CorrectionParameter(ParameterBase):
+class CorrectionParameterBase(ParameterBase):
     """Prameter for corrections (flicker, shaking, etc.) on image series"""
 
-    def load(self, filename=None):
-        """Load parameter data from .json and .tsv files (with same name).
+    @abstractmethod
+    def apply(self, img, num):
+        """How to apply the transform on an image array
 
-        Redefine Parameter.load() because here stored as tsv file.
+        To be defined in subclasses.
+
+        Parameters
+        ----------
+        img : array_like
+            input image on which to apply the transform
+
+        Returns
+        -------
+        array_like
+            the processed image
         """
-        path = self.data_series.savepath
-        fname = CONFIG['filenames'][self.parameter_name] if filename is None else filename
-        try:  # if there is metadata, load it
-            filepath = path / (fname + '.json')
-            self.data = FileIO.from_json(filepath)
-        except FileNotFoundError:
-            self.data = {}
-        self.data['correction'] = FileIO.from_tsv(filepath=path + (fname + '.tsv'))
+        pass

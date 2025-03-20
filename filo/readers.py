@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from functools import lru_cache
 
 
-class FileSeriesReaderBase(ABC):
+class DataSeriesReaderBase(ABC):
     """Base class for reading data from series of files and applying modifications
 
     Modifications can include :
@@ -15,36 +15,39 @@ class FileSeriesReaderBase(ABC):
 
     def __init__(
         self,
-        series,
+        data_series,
         cache=False,
-        file_cache_size=128,
+        read_cache_size=128,
         transform_cache_size=128,
     ):
-        """Init FileSeriesReader object
+        """Init DataSeriesReader object
 
         Parameters
         ----------
-        series : filo.DataSeries (or subclass)
+        data_series : filo.DataSeries (or subclass)
             series from which to read the data
 
-        cache : bool
-            if True, use caching when loading data from files and applying
-            corrections/transforms, to avoid loading/transforming several times.
+        cache : bool, optional
+            if True, use caching for speed improvement
+            (both for loading files and transforms)
+            this is useful when calling read() multiple times on the same
+            image (e.g. when inspecting series/stacks)
 
-        file_cache_size : int
-            How many files can be loaded in the cache (if cache=True, files are
-            read only once and stored in memory unless they exceed this limit).
+        read_cache_size : int, optional
+            How many data readings can be loaded in the cache
+            (if cache=True, files/data are read only once and stored in memory
+            unless they exceed this limit).
             Prefer using power of 2 for cache efficiency.
 
-        transform_cache_size : int
+        transform_cache_size : int, optional
             The calculation from loaded data into transformed data can also be
             cached : see file_cache_size
         """
-        self.series = series
+        self.data_series = data_series
         self.cache = cache
 
         if self.cache:
-            self._read = lru_cache(maxsize=file_cache_size)(self._read)
+            self._read = lru_cache(maxsize=read_cache_size)(self._read)
             self.read = lru_cache(maxsize=transform_cache_size)(self.read)
             self.cached_methods = {
                 'files': self._read,
@@ -55,14 +58,14 @@ class FileSeriesReaderBase(ABC):
 
     def apply_correction(self, data, num, correction_name):
         """Apply specific correction (str) to data and return new data array"""
-        correction = getattr(self.series, correction_name)
+        correction = getattr(self.data_series, correction_name)
         if correction.is_empty:
             return data
         return correction.apply(data=data, num=num)
 
     def apply_corrections(self, data, num, **kwargs):
         """Apply stored corrections on the data"""
-        for correction_name in self.series.corrections:
+        for correction_name in self.data_series.corrections:
             # Do not consider any correction specifically marked as False
             if kwargs.get(correction_name, True):
                 data = self.apply_correction(
@@ -74,14 +77,14 @@ class FileSeriesReaderBase(ABC):
 
     def apply_transform(self, data, transform_name):
         """Apply specific transform (str) to data and return new data"""
-        transform = getattr(self.series, transform_name)
+        transform = getattr(self.data_series, transform_name)
         if transform.is_empty:
             return data
         return transform.apply(data)
 
     def apply_transforms(self, data, **kwargs):
         """Apply stored transforms on the data"""
-        for transform_name in self.series.transforms:
+        for transform_name in self.data_series.transforms:
             # Do not consider any transform specifically marked as False
             if kwargs.get(transform_name, True):
                 data = self.apply_transform(
