@@ -1,11 +1,13 @@
 """File Management."""
 
-from .general import list_files, list_all, move_files, move_all
-from .general import batch_file_rename
-from .general import load_csv, data_to_line, line_to_data
-from .general import make_iterable
+from .misc import list_files, list_all, move_files, move_all
+from .misc import batch_file_rename, make_iterable
 
-from .series import File, FileSeries, DataSeries
+from .fileio import load_json, to_json
+from .fileio import load_csv, data_to_line, line_to_data
+
+from .file_series import File, FileSeries
+from .data_series import DataSeries
 
 from .results import ResultsBase
 

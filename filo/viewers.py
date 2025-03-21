@@ -205,7 +205,6 @@ class AnalysisViewerBase(DataViewerBase):
         # Actual anlysis being made, with a live view
         if self.live:
             data = self.analysis.analyze(num, details=True)
-            self.analysis.nums.append(num)
             self.analysis._store_data(data)
             return data
         # Post-analysis inspection of results

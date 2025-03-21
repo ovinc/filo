@@ -67,12 +67,8 @@ class AnalysisBase(ABC):
             This is because apparently multiprocessing imports the main
             program initially, which causes recursive problems.
         """
-        nums = self.data_series.nums[start:end:skip]  # Required nums
-        ntot = len(nums)
-
-        self.nums = []  # Actually analyzed nums
-
         self._initialize()
+        nums = self.data_series.nums[start:end:skip]  # Required nums
 
         if parallel:  # ================================= Multiprocessing mode
 
@@ -86,20 +82,18 @@ class AnalysisBase(ABC):
 
                 # Waitbar ----------------------------------------------------
                 futures_list = list(futures.values())
-                for future in tqdm(as_completed(futures_list), total=ntot):
+                for future in tqdm(as_completed(futures_list), total=len(nums)):
                     pass
 
                 # Get results ------------------------------------------------
                 for num, future in futures.items():
                     data = future.result()
-                    self.nums.append(num)
                     self._store_data(data)
 
         else:  # ============================================= Sequential mode
 
             for num in tqdm(nums):
                 data = self.analyze(num=num)
-                self.nums.append(num)
                 self._store_data(data)
 
         # Finalize -----------------------------------------------------------

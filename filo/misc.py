@@ -83,43 +83,6 @@ def batch_file_rename(name, newname, path='.'):
         filepath.rename(newfilepath)
 
 
-# =================== Functions for csv saving and reading ===================
-
-
-def data_to_line(data, sep='\t'):
-    """Transform iterable into line to write in a file, with a separarator."""
-    data_str_list = [str(x) for x in data]
-    data_str_all = sep.join(data_str_list)
-    return data_str_all + '\n'
-
-
-def line_to_data(line, sep='\t', dtype=float):
-    """Inverse of data_to_line(). Returns data as a tuple of type dtype."""
-    line_list = line.split(sep)
-    data_list = [dtype(x) for x in line_list]
-    return tuple(data_list)
-
-
-def load_csv(filepath, sep=',', skiprows=0):
-    """Load csv file into a list of lists, similar to numpy.genfromtxt()
-
-    Parameters
-    ----------
-    filepath : str or pathlib.Path
-    sep : str
-    skiprows : int
-    """
-    data = []
-    with open(filepath, 'r') as f:
-        for i, line in enumerate(f.readlines()):
-            if i < skiprows:
-                continue
-            data_raw = line.split(sep)
-            data.append([x.strip() for x in data_raw])
-    return data
-
-
-
 # ================================== MISC. ===================================
 
 
