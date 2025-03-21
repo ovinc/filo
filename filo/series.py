@@ -97,7 +97,7 @@ class FileSeries:
             os.path.relpath(folder, self.refpath) for folder in self.folders
         ]
         return (
-            f"{self.__class__} in {self.refpath} / {relative_folders}, "
+            f"{self.__class__.__name__} in {self.refpath} / {relative_folders}, "
             f"{len(self._files)} files]"
         )
 
@@ -301,6 +301,13 @@ class DataSeries:
         self.reader = reader
         self.viewer = viewer
 
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}, data length [{self.ntot}]\n"
+            f"-- corrections: {self.active_corrections}\n"
+            f"-- transforms: {self.active_transforms}"
+        )
+
     # ===================== Corrections and  Transforms ======================
 
     @property
@@ -409,20 +416,17 @@ class DataSeries:
 
     # ==================== Interactive inspection methods ====================
 
-    def show(self, num=0, **kwargs):
+    def show(self, num=0):
         """Show image in a matplotlib window.
 
         Parameters
         ----------
         num : int
             image identifier in the file series
-
-        **kwargs
-            any keyword-argument to pass to the viewer
         """
-        return self.viewer.show(num=num, **kwargs)
+        return self.viewer.show(num=num)
 
-    def inspect(self, start=0, end=None, skip=1, **kwargs):
+    def inspect(self, start=0, end=None, skip=1):
         """Interactively inspect image series.
 
         Parameters
@@ -433,13 +437,10 @@ class DataSeries:
             images to consider. These numbers refer to 'num' identifier which
             starts at 0 in the first folder and can thus be different from the
             actual number in the image filename
-
-        **kwargs
-            any keyword-argument to pass to the viewer
         """
-        return self.viewer.inspect(nums=self.nums[start:end:skip], **kwargs)
+        return self.viewer.inspect(nums=self.nums[start:end:skip])
 
-    def animate(self, start=0, end=None, skip=1, blit=False, **kwargs):
+    def animate(self, start=0, end=None, skip=1, blit=False):
         """Interactively inspect image stack.
 
         Parameters
@@ -453,8 +454,31 @@ class DataSeries:
 
         blit : bool
             use blitting for faster rendering (default False)
-
-        **kwargs
-            any keyword-argument to pass to the viewer
         """
-        return self.viewer.animate(nums=self.nums[start:end:skip], blit=blit, **kwargs)
+        return self.viewer.animate(nums=self.nums[start:end:skip], blit=blit)
+
+    # =========================== Iteration tools ============================
+
+    @property
+    def nums(self):
+        """Iterator (sliceable) of data identifiers.
+
+        Define in subclasses
+
+        Examples
+        --------
+        Allows the user to do e.g.
+        >>> for num in data_series.nums[::3]:
+        >>>     ...
+        """
+        pass
+
+    @property
+    def ntot(self):
+        """Total number of data in the series
+
+        Returns
+        -------
+        int
+        """
+        pass

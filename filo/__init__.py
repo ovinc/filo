@@ -9,11 +9,13 @@ from .series import File, FileSeries, DataSeries
 
 from .results import ResultsBase
 
-from .viewers import KeyPressSlider, DataViewerBase
+from .viewers import KeyPressSlider, DataViewerBase, AnalysisViewerBase
 
 from .readers import DataSeriesReaderBase
 
 from .parameters import ParameterBase, TransformParameterBase, CorrectionParameterBase
+
+from .analysis import AnalysisBase
 
 # from importlib.metadata import version  # only for python 3.8+
 from importlib_metadata import version

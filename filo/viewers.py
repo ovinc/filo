@@ -54,15 +54,18 @@ class DataViewerBase:
         """Init Image Viewer"""
         self.plot_init_done = False
 
+        # The parameters below are changed if necessary when methods are called
+        self.kwargs = {}
+        self.transform = True
+
     def _create_figure(self):
         """Define in subclass, has to define at least self.fig., and self.axs
         if self.axs is not defined in self._first_plot()
         """
         pass
 
-    def _connect_events(self):
-        """Called after _create_figure() to connect events, e.g. figure closing"""
-        pass
+    def _initialize(self):
+        """Anything else to do before first plots"""
 
     def _get_data(self, num):
         """How to get image / analysis and other data to _plot for each frame.
@@ -90,7 +93,7 @@ class DataViewerBase:
         pass
 
     def _plot(self, num):
-        """How to _plot data during live views of analysis."""
+        """How to plot data"""
         data = self._get_data(num)
 
         if not self.plot_init_done:
@@ -104,7 +107,7 @@ class DataViewerBase:
     def show(self, num=0):
         """Show a single, non-animated image (num: image number)."""
         self._create_figure()
-        self._connect_events()
+        self._initialize()
         self.plot_init_done = False
         self._plot(num=num)
         return self.axs
@@ -121,7 +124,7 @@ class DataViewerBase:
             if True, use blitting for fast rendering
         """
         self._create_figure()
-        self._connect_events()
+        self._initialize()
         self.plot_init_done = False
 
         animation = FuncAnimation(
@@ -153,7 +156,7 @@ class DataViewerBase:
             num_step = 1
 
         self._create_figure()
-        self._connect_events()
+        self._initialize()
         self.plot_init_done = False
 
         self._plot(num=num_min)
@@ -175,3 +178,62 @@ class DataViewerBase:
         slider.on_changed(self._plot)
 
         return slider
+
+
+class AnalysisViewerBase(DataViewerBase):
+    """Matplotlib viewer to display analysis results alongside data"""
+
+    def __init__(self, analysis):
+        """Init analysis viewer
+
+        Parameters
+        ----------
+        analysis : Analysis object
+            e.g. GreyLevel(), ContourTracking(), etc.
+
+        """
+        self.analysis = analysis
+
+        # live = True when viewing actual analysis being made
+        # live = False when viewing from results (analysis already performed)
+        self.live = False
+
+        super().__init__()
+
+    def _get_data(self, num):
+        """Analyses classes should define adequate methods if needed"""
+        # Actual anlysis being made, with a live view
+        if self.live:
+            data = self.analysis.analyze(num, details=True)
+            self.analysis.nums.append(num)
+            self.analysis._store_data(data)
+            return data
+        # Post-analysis inspection of results
+        else:
+            return self._generate_data_from_results(num)
+
+    def _initialize(self):
+        """What to do before first plot"""
+        if self.live:
+            self.cid_close = self.fig.canvas.mpl_connect(
+                'close_event',
+                self._on_fig_close,
+            )
+            self.analysis.nums = []
+            self.analysis._initialize()
+
+    def _on_fig_close(self, event):
+        """This is because we want the analysis (i.e. animation) to finish
+        before saving the data in live mode."""
+        # if live, it's the _on_fig_close() method of the viewer which takes
+        # care of saving the data, because if not, save_results() is called
+        # at the beginning of the FuncAnimation (i.e., analysis in this case,
+        # and no data is saved)
+        if self.live:
+            self.analysis.formatter._to_results()
+            self.live = False
+
+    def _generate_data_from_results(self, num):
+        """To subclass"""
+        pass
+
