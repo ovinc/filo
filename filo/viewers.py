@@ -92,6 +92,11 @@ class DataViewerBase:
         """
         pass
 
+    @staticmethod
+    def _autoscale(ax):
+        ax.relim()  # without this, axes limits change don't work
+        ax.autoscale(axis='both')
+
     def _plot(self, num):
         """How to plot data"""
         data = self._get_data(num)

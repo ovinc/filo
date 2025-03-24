@@ -124,6 +124,7 @@ class AnalysisBase(ABC):
         """
         self.viewer.transform = transform
         self.viewer.kwargs = kwargs
+
         return self.viewer.show(num=num)
 
     def inspect(
@@ -205,8 +206,6 @@ class AnalysisBase(ABC):
         self.viewer.transform = transform
         self.viewer.kwargs = kwargs
         self.viewer.live = live
-        if live:
-            self.nums = nums
 
         return self.viewer.animate(nums=nums, blit=blit)
 

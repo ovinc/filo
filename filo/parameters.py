@@ -71,13 +71,13 @@ class TransformParameterBase(ParameterBase):
 
         Parameters
         ----------
-        img : array_like
-            input image on which to apply the transform
+        data : Any
+            input data on which to apply the transform
 
         Returns
         -------
-        array_like
-            the processed image
+        Any
+            the processed data
         """
         pass
 
@@ -95,19 +95,22 @@ class CorrectionParameterBase(ParameterBase):
     """Prameter for corrections (flicker, shaking, etc.) on image series"""
 
     @abstractmethod
-    def apply(self, img, num):
-        """How to apply the transform on an image array
+    def apply(self, data, num):
+        """How to apply the correction on data
 
         To be defined in subclasses.
 
         Parameters
         ----------
-        img : array_like
-            input image on which to apply the transform
+        data : Any
+            input data on which to apply the transform
+
+        num : int
+            the data identifier
 
         Returns
         -------
-        array_like
-            the processed image
+        Any
+            the processed data
         """
         pass
