@@ -8,9 +8,6 @@ from abc import ABC, abstractmethod
 class ResultsBase(ABC):
     """Base class for classes that stores results and metadata to files."""
 
-    # define in subclasses (e.g. 'glevel' or 'ctrack' etc.)
-    measurement_type = None
-
     # define in subclass (e.g. 'Img_GreyLevel')
     # Note that the program will add extensions depending on context
     # (data or metadata).

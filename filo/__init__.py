@@ -9,15 +9,16 @@ from .fileio import load_csv, data_to_line, line_to_data
 from .file_series import File, FileSeries
 from .data_series import DataSeries
 
-from .results import ResultsBase
-
 from .viewers import KeyPressSlider, DataViewerBase, AnalysisViewerBase
+from .viewers import FormattedAnalysisViewerBase
 
 from .readers import DataSeriesReaderBase
 
 from .parameters import ParameterBase, TransformParameterBase, CorrectionParameterBase
 
-from .analysis import AnalysisBase
+from .analysis import AnalysisBase, FormattedAnalysisBase
+from .results import ResultsBase
+from .formatters import FormatterBase
 
 # from importlib.metadata import version  # only for python 3.8+
 from importlib_metadata import version

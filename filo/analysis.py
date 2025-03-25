@@ -13,15 +13,19 @@ from tqdm import tqdm
 class AnalysisBase(ABC):
     """Base class for analysis subclasses (GreyLevel, ContourTracking, etc.)."""
 
-    def __init__(self, data_series):
+    def __init__(self, data_series, viewer=None):
         """Initialize Analysis object
 
         Parameters
         ----------
-        data_series : ImgSeries or ImgStack object
+        data_series : DataSeries
             data series on which the analysis will be run
+
+        viewer : Viewer, optional
+            data viewer to do show(), inspect(), animate() etc.
         """
         self.data_series = data_series
+        self.viewer = viewer
 
     # ============================ Public methods ============================
 
@@ -124,7 +128,6 @@ class AnalysisBase(ABC):
         """
         self.viewer.transform = transform
         self.viewer.kwargs = kwargs
-
         return self.viewer.show(num=num)
 
     def inspect(
@@ -158,13 +161,10 @@ class AnalysisBase(ABC):
         **kwargs
             any keyword-argument to pass to the viewer.
         """
-        nums = self.data_series.nums[start:end:skip]
-
         self.viewer.transform = transform
         self.viewer.kwargs = kwargs
         self.viewer.live = live
-
-        return self.viewer.inspect(nums=nums)
+        return self.viewer.inspect(nums=self.data_series.nums[start:end:skip])
 
     def animate(
         self,
@@ -201,13 +201,13 @@ class AnalysisBase(ABC):
         **kwargs
             any keyword-argument to pass to the viewer.
         """
-        nums = self.data_series.nums[start:end:skip]
-
         self.viewer.transform = transform
         self.viewer.kwargs = kwargs
         self.viewer.live = live
-
-        return self.viewer.animate(nums=nums, blit=blit)
+        return self.viewer.animate(
+            nums=self.data_series.nums[start:end:skip],
+            blit=blit,
+        )
 
     # =================== Methods to define in subclasses ====================
 
@@ -216,7 +216,7 @@ class AnalysisBase(ABC):
 
         Define in subclasses (optional)
         """
-        print('hello')
+        pass
 
     def _store_data(self, data):
         """How to handle data output by analyze()"""
@@ -245,4 +245,84 @@ class AnalysisBase(ABC):
         -------
         Any
             data that can be used by ._store_data()"""
+        pass
+
+
+class FormattedAnalysisBase(AnalysisBase):
+    """Analysis that uses Results / Formatter classes to manage generated data
+
+    The Formatter is an interface between the raw results provided by analyze()
+    and the Results class.
+    """
+
+    def __init__(self, data_series, results, formatter, viewer=None):
+        """Init FormattedAnalysis object.
+
+        Parameters
+        ----------
+        Parameters
+        ----------
+        data_series : DataSeries
+            data series on which the analysis will be run
+
+        formatter : Formatter
+            interface between raw analysis and results class
+
+        viewer : Viewer, optional
+            data viewer to do show(), inspect(), animate() etc.
+        """
+        super().__init__(data_series=data_series, viewer=viewer)
+        self.results = results
+        self.formatter = formatter
+
+    # ============ Redefinition of AnalysisBase abstract methods =============
+
+    def _initialize(self):
+        """Check everything OK before starting analysis & initialize params."""
+        self._init_analysis()
+        self.formatter._prepare_data_storage()
+
+    def _store_data(self, data):
+        """How to handle results spit out by analysis"""
+        self.formatter._store_data(data)
+
+    def _finalize(self):
+        """What to do at the end of analysis"""
+        self._end_analysis()
+        self.formatter._to_results()
+
+    # ================== Abstract methods from AnalysisBase ==================
+
+    @abstractmethod
+    def analyze(self, num, details=False):
+        """Same as _analyze, but with num as input instead of img.
+
+        Parameters
+        ----------
+        num : int
+            number identifier across the data series
+
+        details : bool
+            whether to include more details (e.g. for debugging or live view)
+
+        Returns
+        -------
+        Any
+            data that can be used by ._store_data()"""
+        pass
+
+    # ========================= New abstract methods =========================
+
+    def _init_analysis(self):
+        """Any necessary initialization outside of data storage preparation
+
+        [OPTIONAL]
+        """
+        pass
+
+    def _end_analysis(self):
+        """Any necessary initialization outside of data storage preparation
+
+        [OPTIONAL]
+        """
         pass

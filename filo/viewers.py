@@ -194,8 +194,6 @@ class AnalysisViewerBase(DataViewerBase):
         Parameters
         ----------
         analysis : Analysis object
-            e.g. GreyLevel(), ContourTracking(), etc.
-
         """
         self.analysis = analysis
 
@@ -234,10 +232,16 @@ class AnalysisViewerBase(DataViewerBase):
         # at the beginning of the FuncAnimation (i.e., analysis in this case,
         # and no data is saved)
         if self.live:
-            self.analysis.formatter._to_results()
+            self.analysis._finalize()
             self.live = False
 
     def _generate_data_from_results(self, num):
         """To subclass"""
         pass
 
+
+class FormattedAnalysisViewerBase(AnalysisViewerBase):
+    """AnalysisViewer for FormattedAnalysis."""
+
+    def _generate_data_from_results(self, num):
+        return self.analysis.formatter._generate_data_from_results(num)
