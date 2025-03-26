@@ -6,8 +6,17 @@ from abc import ABC, abstractmethod
 
 
 class ResultsBase(ABC):
-    """Base class for classes that stores results and metadata to files."""
+    """Base class for classes that stores results and metadata to files.
 
+    Can be used as is (without subclassing) but won't be able to
+    interact with files.
+    In order to interact (save/load) with files, define the following methods:
+    - _load_data()
+    - _save_data()
+    - _load_metadata()
+    - _save_metadata()
+    (see below)
+    """
     # define in subclass (e.g. 'Img_GreyLevel')
     # Note that the program will add extensions depending on context
     # (data or metadata).
@@ -207,9 +216,10 @@ class ResultsBase(ABC):
     # ===================== To be defined in subclasses ======================
     # ------------------------------------------------------------------------
 
-    @abstractmethod
     def _load_data(self, filepath):
-        """Return analysis data from file.
+        """Return analysis data from file
+
+        [Optional]
 
         Parameters
         ----------
@@ -224,9 +234,10 @@ class ResultsBase(ABC):
         """
         pass
 
-    @abstractmethod
     def _save_data(self, data, filepath):
         """Write data to file
+
+        [Optional]
 
         Parameters
         ----------
@@ -243,9 +254,10 @@ class ResultsBase(ABC):
         """
         pass
 
-    @abstractmethod
     def _load_metadata(self, filepath):
         """Return analysis metadata from file as a dictionary.
+
+        [Optional]
 
         Parameters
         ----------
@@ -259,9 +271,10 @@ class ResultsBase(ABC):
         """
         pass
 
-    @abstractmethod
     def _save_metadata(self, metadata, filepath):
         """Write metadata to file
+
+        [Optional]
 
         Parameters
         ----------
