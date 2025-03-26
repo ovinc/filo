@@ -27,6 +27,10 @@ class ParameterBase:
     def is_empty(self):
         return not self.data
 
+    @property
+    def is_active(self):
+        return not self.is_empty
+
     # ============================= To subclass ==============================
 
     @property
