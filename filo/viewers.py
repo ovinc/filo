@@ -254,7 +254,7 @@ class AnalysisViewerBase(DataViewerBase):
             return data
         # Post-analysis inspection of results
         else:
-            return self._generate_data_from_results(num)
+            return self._regenerate_data_from_results(num)
 
     def _initialize(self):
         """What to do before first plot"""
@@ -327,7 +327,7 @@ class AnalysisViewerBase(DataViewerBase):
 
     # ----------------------- New methods to subclass ------------------------
 
-    def _generate_data_from_results(self, num):
+    def _regenerate_data_from_results(self, num):
         """To subclass (optional)"""
         pass
 
@@ -335,5 +335,5 @@ class AnalysisViewerBase(DataViewerBase):
 class FormattedAnalysisViewerBase(AnalysisViewerBase):
     """AnalysisViewer for FormattedAnalysis."""
 
-    def _generate_data_from_results(self, num):
-        return self.analysis.formatter._generate_data_from_results(num)
+    def _regenerate_data_from_results(self, num):
+        return self.analysis.formatter._regenerate_data_from_results(num)

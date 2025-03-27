@@ -13,6 +13,11 @@ from tqdm import tqdm
 class AnalysisBase(ABC):
     """Base class for analysis subclasses (GreyLevel, ContourTracking, etc.)."""
 
+    # If results are independent (results from one num do not depend from
+    # analysis on other nums), one do not need to re-do the analysis when
+    # asking for the same num twice, and parallel computing is possible
+    independent_results = False
+
     def __init__(self, data_series, viewer=None):
         """Initialize Analysis object
 
@@ -26,6 +31,9 @@ class AnalysisBase(ABC):
         """
         self.data_series = data_series
         self.viewer = viewer
+
+    def __repr__(self):
+        return f"{self.__class__.__name__} analysis on {self.data_series}"
 
     # ============================ Public methods ============================
 
@@ -75,6 +83,13 @@ class AnalysisBase(ABC):
         nums = self.data_series.nums[start:end:skip]  # Required nums
 
         if parallel:  # ================================= Multiprocessing mode
+
+            if not self.independent_results:
+                raise ValueError(
+                    "Parallel computing not available for "
+                    f"{self.__class__.__name} because analysis results are"
+                    "not independent of each other."
+                )
 
             futures = {}
 

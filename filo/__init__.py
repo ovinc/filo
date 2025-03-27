@@ -18,7 +18,7 @@ from .parameters import ParameterBase, TransformParameterBase, CorrectionParamet
 
 from .analysis import AnalysisBase, FormattedAnalysisBase
 from .results import ResultsBase
-from .formatters import FormatterBase
+from .formatters import FormatterBase, PandasFormatterBase
 
 # from importlib.metadata import version  # only for python 3.8+
 from importlib_metadata import version

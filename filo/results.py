@@ -2,7 +2,7 @@
 
 
 from pathlib import Path
-from abc import ABC, abstractmethod
+from abc import ABC
 
 
 class ResultsBase(ABC):
