@@ -130,11 +130,6 @@ class DataViewerBase(ABC):
 
     # ========================= Other useful methods =========================
 
-    @staticmethod
-    def _autoscale(ax):
-        ax.relim()  # without this, axes limits change don't work
-        ax.autoscale(axis='both')
-
     def _plot(self, num):
         """How to plot data"""
         data = self._get_data(num)
@@ -241,9 +236,23 @@ class AnalysisViewerBase(DataViewerBase):
         # live = False when viewing from results (analysis already performed)
         self.live = False
 
+        # save = True means that if there is live analysis, it will
+        # overwrite existing results
+        # save = False means that live analysis does not impact analysis.results
+        self.save = False
+
         super().__init__()
 
     # =========== Definition of methods required by DataViewerBase ===========
+
+    def _initialize(self):
+        """What to do before first plot"""
+        if self.live:
+            self.cid_close = self.fig.canvas.mpl_connect(
+                'close_event',
+                self._on_fig_close,
+            )
+            self.analysis._initialize()
 
     def _get_data(self, num):
         """Analyses classes should define adequate methods if needed"""
@@ -256,16 +265,6 @@ class AnalysisViewerBase(DataViewerBase):
         else:
             return self._regenerate_data_from_results(num)
 
-    def _initialize(self):
-        """What to do before first plot"""
-        if self.live:
-            self.cid_close = self.fig.canvas.mpl_connect(
-                'close_event',
-                self._on_fig_close,
-            )
-            self.analysis.nums = []
-            self.analysis._initialize()
-
     # ============================ Other methods =============================
 
     def _on_fig_close(self, event):
@@ -277,6 +276,9 @@ class AnalysisViewerBase(DataViewerBase):
         # and no data is saved)
         if self.live:
             self.analysis._finalize()
+            if self.save:
+                self.analysis._save()
+                self.save = False
             self.live = False
 
     # ========================= Methods to subclass ==========================

@@ -118,13 +118,22 @@ class AnalysisBase(ABC):
         # Finalize -----------------------------------------------------------
 
         self._finalize()
+        self._save()
 
     # ==================== Interactive inspection methods ====================
+
+    def _prepare_viewer(self, transform, live, save, **kwargs):
+        self.viewer.transform = transform
+        self.viewer.kwargs = kwargs
+        self.viewer.live = live
+        self.viewer.save = save
 
     def show(
         self,
         num=0,
         transform=True,
+        live=False,
+        save=False,
         **kwargs,
     ):
         """Show data in a matplotlib window.
@@ -138,11 +147,18 @@ class AnalysisBase(ABC):
             if True (default), apply active transforms
             if False, load raw data.
 
+        live : bool
+            if True, run analysis (and store data) during the inspection
+            if False, inspect from existing results (analysis already made)
+
+        save : bool
+            if True (and live=True), live analyzed data will be saved to
+            results in the end ; if not, live analysis is not kept.
+
         **kwargs
             any keyword-argument to pass to the viewer.
         """
-        self.viewer.transform = transform
-        self.viewer.kwargs = kwargs
+        self._prepare_viewer(transform=transform, live=live, save=save, **kwargs)
         return self.viewer.show(num=num)
 
     def inspect(
@@ -152,6 +168,7 @@ class AnalysisBase(ABC):
         skip=1,
         transform=True,
         live=False,
+        save=False,
         **kwargs,
     ):
         """Interactively inspect data series.
@@ -173,12 +190,14 @@ class AnalysisBase(ABC):
             if True, run analysis (and store data) during the inspection
             if False, inspect from existing results (analysis already made)
 
+        save : bool
+            if True (and live=True), live analyzed data will be saved to
+            results in the end ; if not, live analysis is not kept.
+
         **kwargs
             any keyword-argument to pass to the viewer.
         """
-        self.viewer.transform = transform
-        self.viewer.kwargs = kwargs
-        self.viewer.live = live
+        self._prepare_viewer(transform=transform, live=live, save=save, **kwargs)
         return self.viewer.inspect(nums=self.data_series.nums[start:end:skip])
 
     def animate(
@@ -188,6 +207,7 @@ class AnalysisBase(ABC):
         skip=1,
         transform=True,
         live=False,
+        save=False,
         blit=False,
         **kwargs,
     ):
@@ -210,15 +230,17 @@ class AnalysisBase(ABC):
             if True, run analysis (and store data) during the inspection
             if False, inspect from existing results (analysis already made)
 
+        save : bool
+            if True (and live=True), live analyzed data will be saved to
+            results in the end ; if not, live analysis is not kept.
+
         blit : bool
             if True, use blitting for faster animation.
 
         **kwargs
             any keyword-argument to pass to the viewer.
         """
-        self.viewer.transform = transform
-        self.viewer.kwargs = kwargs
-        self.viewer.live = live
+        self._prepare_viewer(transform=transform, live=live, save=save, **kwargs)
         return self.viewer.animate(
             nums=self.data_series.nums[start:end:skip],
             blit=blit,
@@ -239,6 +261,13 @@ class AnalysisBase(ABC):
 
     def _finalize(self):
         """What to do at the end of the analysis.
+
+        Define in subclasses (optional)
+        """
+        pass
+
+    def _save(self):
+        """How to save results in a data container after _finalize()
 
         Define in subclasses (optional)
         """
@@ -275,8 +304,6 @@ class FormattedAnalysisBase(AnalysisBase):
 
         Parameters
         ----------
-        Parameters
-        ----------
         data_series : DataSeries
             data series on which the analysis will be run
 
@@ -301,9 +328,8 @@ class FormattedAnalysisBase(AnalysisBase):
         """How to handle results spit out by analysis"""
         self.formatter._store_data(data)
 
-    def _finalize(self):
-        """What to do at the end of analysis"""
-        self._end_analysis()
+    def _save(self):
+        """How to save results in a data container"""
         self.formatter._to_results()
 
     # ================== Abstract methods from AnalysisBase ==================
@@ -322,8 +348,17 @@ class FormattedAnalysisBase(AnalysisBase):
 
         Returns
         -------
-        Any
-            data that can be used by ._store_data()"""
+        dict
+            data that can be used by formatter._store_data(), with at least
+            the key 'num' indicating the data series identifier
+        """
+        pass
+
+    def _finalize(self):
+        """What to do at the end of the analysis.
+
+        Define in subclasses (optional)
+        """
         pass
 
     # ========================= New abstract methods =========================
