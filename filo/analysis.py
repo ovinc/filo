@@ -9,6 +9,9 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 # Nonstandard
 from tqdm import tqdm
 
+# Local imports
+from .multiprocess import Multiprocess
+
 
 class AnalysisBase(ABC):
     """Base class for analysis subclasses (GreyLevel, ContourTracking, etc.)."""
@@ -91,23 +94,11 @@ class AnalysisBase(ABC):
                     "not independent of each other."
                 )
 
-            futures = {}
-
-            with ProcessPoolExecutor(max_workers=nprocess) as executor:
-
-                for num in nums:
-                    future = executor.submit(self.analyze, num)
-                    futures[num] = future
-
-                # Waitbar ----------------------------------------------------
-                futures_list = list(futures.values())
-                for future in tqdm(as_completed(futures_list), total=len(nums)):
-                    pass
-
-                # Get results ------------------------------------------------
-                for num, future in futures.items():
-                    data = future.result()
-                    self._store_data(data)
+            multiprocess = Multiprocess(
+                func=self.analyze,
+                post_func=self._store_data,
+            )
+            multiprocess.run(args=nums)
 
         else:  # ============================================= Sequential mode
 

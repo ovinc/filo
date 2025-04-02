@@ -41,7 +41,7 @@ class ParameterBase:
 
 
 class TransformParameterBase(ParameterBase):
-    """Base class for global transorms on image series (rotation, crop etc.)
+    """Base class for global transorms on data series (rotation, crop etc.)
 
     These parameters DO impact analysis and are stored in metadata.
     """
@@ -77,6 +77,7 @@ class TransformParameterBase(ParameterBase):
         ----------
         data : Any
             input data on which to apply the transform
+            (result of data_series.read())
 
         Returns
         -------
