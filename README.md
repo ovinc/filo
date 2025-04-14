@@ -113,6 +113,28 @@ Then it provides the following methods and attributes:
 - `data`, analysis data
 - `metadata`, analysis metadata
 
+
+Data and data analysis
+======================
+
+See *analysis.py* and *data_series* modules, with classes
+- `DataSeries()`
+- `AnalysisBase()`
+etc.
+
+(see e.g. *ExampleDataSeries.ipynb*)
+
+
+Resampling
+==========
+
+Functions:
+- `create_bins_centerd_on()`
+- `resample_dataframe()`
+
+(see *ExampleResample.ipynb*)
+
+
 Misc. Functions
 ===============
 

@@ -13,6 +13,7 @@ from .viewers import KeyPressSlider, DataViewerBase, AnalysisViewerBase
 from .viewers import FormattedAnalysisViewerBase
 
 from .readers import DataSeriesReaderBase
+from .resample import create_bins_centered_on, resample_dataframe
 
 from .parameters import ParameterBase, TransformParameterBase, CorrectionParameterBase
 
