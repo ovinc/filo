@@ -4,6 +4,7 @@ import filo
 from pathlib import Path
 from filo import FileSeries
 import pandas as pd
+import numpy as np
 
 MODULE_PATH = Path(filo.__file__).parent / '..'
 DATA_PATH = MODULE_PATH / 'data'
@@ -53,14 +54,25 @@ def test_series_duration():
 def test_centered_bins():
     bins = filo.create_bins_centered_on(ANALYSIS_DATA.index)
     assert len(bins) == 11
-    assert int(bins[-1][1]) == 1659008870
+    assert int(bins[3][0]) == 1659008150
 
 
 def test_resample():
+    """Resampling with auto max_interval"""
     df = filo.resample_dataframe(
         dataframe=PRESSURE_DATA.drop('dt (s)', axis=1),
         new_index=ANALYSIS_DATA.index,
-        max_interval=30,
         agg=['mean', 'std']
     )
-    assert round(df['p (Pa)']['mean'].iloc[-2]) == 2209
+    assert round(df['p (Pa)']['mean'].iloc[-3]) == 2183
+
+
+def test_resample_short_time():
+    """Resampling with max_interval that is short and creates NaN"""
+    df = filo.resample_dataframe(
+        dataframe=PRESSURE_DATA.drop('dt (s)', axis=1),
+        new_index=ANALYSIS_DATA.index,
+        max_interval=15,
+        agg=['mean', 'std']
+    )
+    assert np.isnan(df['p (Pa)']['mean'].iloc[-1])

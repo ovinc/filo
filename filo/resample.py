@@ -12,9 +12,13 @@ def create_bins_centered_on(values, max_interval=None):
     that can yield a centered bin around the values without overlapping
     with the other bins will be chosen.
 
-    For example:
-    values                 .     .     .     .                .     .     .
-    bins (default)      |     |     |     |     |          |     |     |     |
+    For example (default bins without max_interval)
+        values                  o         o            o     o     o
+        bins[0]              |  .  |      .            .     .     .
+        bins[1]                    |      .      |     .     .     .
+        bins[2]                                     |  .  |  .     .
+        bins[3]                                           |  .  |  .
+        bins[4]                                                 |  .  |
 
     Parameters
     ----------
@@ -65,9 +69,13 @@ def resample_dataframe(
     The function also replaces the index of the dataframe
 
     For example:
-    dataframe         ........................................................
-    new_index             .     .     .     .                .     .     .
-    bins (default)     |     |     |     |     |          |     |     |     |
+        dataframe     ........................................................
+        new index               o         o            o     o     o
+        bins[0]              |  .  |      .            .     .     .
+        bins[1]                    |      .      |     .     .     .
+        bins[2]                                     |  .  |  .     .
+        bins[3]                                           |  .  |  .
+        bins[4]                                                 |  .  |
 
     Parameters
     ----------
@@ -106,10 +114,21 @@ def resample_dataframe(
         condition = (dataframe.index >= vmin) & (dataframe.index < vmax)
         dataframe.loc[condition, '_num'] = i
 
-    dataframe_gpby = dataframe.groupby('_num', observed=False)
-    dataframe_final = dataframe_gpby.agg(agg).drop(-1)
+    dataframe_gpby = dataframe.groupby('_num')
+    dataframe_agg = dataframe_gpby.agg(agg).drop(-1)
 
+    # This is necessary because if there are indices of the new_index where
+    # the condition above is not fulfilled (no data in corresponding bin)
+    # there is no row corresponding to that data in the aggregated dataframe
+    # Here by default, reindex() will fill with NaN where there are missing
+    # indices.
+    all_nums = range(len(new_index))
+    dataframe_final = dataframe_agg.reindex(all_nums)
+
+    # Now the final dataframe should have same number of rows as the new_index
+    # and it is possible to assign the new_index in place of the _num index
     dataframe_final.index = new_index
+
     # This is to return the initial dataframe to its initial state
     dataframe.drop('_num', axis=1, inplace=True)
 
