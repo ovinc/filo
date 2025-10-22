@@ -2,7 +2,7 @@
 
 
 # Standard library imports
-from abc import ABC, abstractmethod
+from abc import ABC
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 # Nonstandard

@@ -248,15 +248,3 @@ class PandasFormatterBase(FormatterBase):
         dict
         """
         return {}
-
-    def _regenerate_additional_data(num):
-        """Any additional data to include in data regeneration
-
-        [Optional]
-        For data regeneration from stored results
-
-        Returns
-        -------
-        dict
-        """
-        return {}
