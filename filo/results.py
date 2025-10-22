@@ -31,6 +31,14 @@ class ResultsBase:
         'metadata': ('.json',),
     }
 
+    # What to add to the default filename or specified filename
+    # needs to be same length as extensions above.
+    # useful if two extensions are the same, to distinguish filenames
+    filename_adds = {
+        'data': ('',),
+        'metadata': ('',),
+    }
+
     # Corresponding loading and saving methods, possibility to put several
     # in order to save data to various files or different formats.
     # Must be same length as extensions above.
@@ -84,16 +92,16 @@ class ResultsBase:
         pathlib.Path
             file path
         """
-        try:
-            extensions = self.extensions[kind]
-        except KeyError:
-            raise ValueError(
-                f'{kind} not a valid kind (should be in {list(self.extensions)})'
-            )
-        return (
-            self.savepath / (self._set_filename(filename) + extension)
-            for extension in extensions
-        )
+        extensions = self.extensions[kind]
+        filename_adds = self.filename_adds[kind]
+        filenames = [
+            self._set_filename(filename) + filename_add
+            for filename_add in filename_adds
+        ]
+        return [
+            self.savepath / (filename + extension)
+            for filename, extension in zip(filenames, extensions)
+        ]
 
     # How to initialize data and metadata attributes -------------------------
 

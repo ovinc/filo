@@ -143,6 +143,18 @@ class PandasFormatterBase(FormatterBase):
     def columns(self):
         return list(self._column_names())
 
+    @property
+    def results_dataframe(self):
+        """Indicate where pandas dataframs is in results.
+
+        In many cases, it will be results.data directly (default)
+        but in some applications it will be something else
+        (e.g. multiformatters).
+
+        Subclass if necessary
+        """
+        return self.analysis.results.data
+
     # ================= Subclassing of FormatterBase methods =================
 
     def _prepare_data_storage(self):
@@ -161,7 +173,7 @@ class PandasFormatterBase(FormatterBase):
 
     def _regenerate_analysis_data(self, num):
         """How to go back to raw data from data stored in results"""
-        data = self.analysis.results.data[self.columns]
+        data = self.results_dataframe[self.columns]
         try:
             row = data.loc[num]
         except KeyError:    # Analysis not made for the specific num
