@@ -2,7 +2,8 @@
 
 from abc import ABC, abstractmethod
 
-class ParameterBase:
+
+class ParameterBase(ABC):
     """Base class to define common methods for different parameters."""
 
     def __init__(self, data_series):

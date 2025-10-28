@@ -169,6 +169,11 @@ class PandasFormatterBase(FormatterBase):
         if num in self.data.index and self.analysis.independent_results:
             return
 
+        # Avoid bugs if data_to_results_row deactivated and does not
+        # process data
+        if self._data_to_results_row(data) is None:
+            return
+
         self.data.loc[num] = self._data_to_results_row(data)
 
     def _regenerate_analysis_data(self, num):
